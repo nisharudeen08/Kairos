@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <!-- Lightning bolt symbol -->
+  <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z"
+        fill="url(#g)" stroke="none"/>
+</svg>

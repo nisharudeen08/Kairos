@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAIROS AI</title>
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <div id="app">
+    <header id="toolbar">
+      <div id="brand">
+        <span class="brand-icon">⚡</span>
+        <span class="brand-name">KAIROS</span>
+      </div>
+      <div id="toolbar-actions">
+        <button id="btn-settings" title="Settings" aria-label="Open settings">⚙</button>
+        <button id="btn-clear" title="Clear chat" aria-label="Clear chat">🗑</button>
+      </div>
+    </header>
+
+    <main id="messages" role="log" aria-live="polite" aria-label="Chat messages"></main>
+
+    <footer id="input-area">
+      <div id="mode-selector">
+        <button class="mode-btn" data-mode="ask" title="Simple chat/explanation">Ask</button>
+        <button class="mode-btn active" data-mode="agent" title="Semi-autonomous task execution">Agent</button>
+        <button class="mode-btn" data-mode="full" title="Autonomous system access">Full Agent</button>
+        <button class="mode-btn" data-mode="plan" title="Architectural planning focus">Plan</button>
+        <button class="mode-btn" data-mode="fast" title="Quick low-latency response">Fast</button>
+      </div>
+      
+      <div id="reasoning-control">
+        <label for="reasoning-slider">Reasoning Level:</label>
+        <input type="range" id="reasoning-slider" min="1" max="3" value="2" step="1">
+        <span id="reasoning-val">Med</span>
+      </div>
+
+      <div id="input-wrapper">
+        <textarea
+          id="user-input"
+          placeholder="Ask KAIROS anything about your code…"
+          rows="1"
+          aria-label="Chat input"
+          autocomplete="off"
+          spellcheck="true"
+        ></textarea>
+        <button id="btn-send" aria-label="Send message" title="Send (Enter)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div id="status-bar">
+        <span id="status-text">Ready</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="chat.js"></script>
+</body>
+</html>

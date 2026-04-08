@@ -1,0 +1,9 @@
+.env
+.qwen/
+node_modules/
+consloe
+
+litellm/.env
+
+.DS_Store
+Thumbs.db

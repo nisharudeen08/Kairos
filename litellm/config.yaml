@@ -1,0 +1,109 @@
+# --- LiteLLM Proxy Configuration ---------------------------------------------
+# KAIROS AI - Hardened Key Configuration
+# Generated to resolve Windows environment variable issues.
+# ------------------------------------------------------------------------------
+
+model_list:
+
+  # --- FLAGSHIP TIER (Complex Tasks) ---
+
+  - model_name: gpt-oss-120b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-120b:free
+      api_key: "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"
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: qwen3-coder
+    litellm_params:
+      model: openrouter/qwen/qwen3-coder:free
+      api_key: "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"
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: llama-3.3-70b
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      api_key: "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"
+      api_base: https://openrouter.ai/api/v1
+
+  - model_name: hermes-405b
+    litellm_params:
+      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      api_key: "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"
+      api_base: https://openrouter.ai/api/v1
+
+  # --- BALANCED TIER (Reliable & Fast) ---
+
+  - model_name: gpt-oss-20b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_key: "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"
+
+  - model_name: gemma-3-27b
+    litellm_params:
+      model: openrouter/google/gemma-3-27b-it:free
+      api_key: "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"
+
+  - model_name: qwen3-next-80b
+    litellm_params:
+      model: openrouter/qwen/qwen3-next-80b-a3b-instruct:free
+      api_key: "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"
+
+  - model_name: stepfun-flash
+    litellm_params:
+      model: openrouter/stepfun/step-3.5-flash:free
+      api_key: "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"
+
+  - model_name: glm-4-5-air
+    litellm_params:
+      model: openrouter/z-ai/glm-4.5-air:free
+      api_key: "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"
+
+  - model_name: qwen3-6-plus
+    litellm_params:
+      model: openrouter/qwen/qwen3-coder:free
+      api_key: "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"
+
+  - model_name: nemotron-30b
+    litellm_params:
+      model: openrouter/nvidia/nemotron-4-340b-instruct:free
+      api_key: "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"
+
+  - model_name: gemma-3-12b
+    litellm_params:
+      model: openrouter/google/gemma-3-12b-it:free
+      api_key: "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"
+
+  - model_name: dolphin-mistral-24b
+    litellm_params:
+      model: openrouter/cognitivecomputations/dolphin-mistral-7b:free
+      api_key: "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"
+
+  - model_name: gemma-3-4b
+    litellm_params:
+      model: openrouter/google/gemma-3-4b-it:free
+      api_key: "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"
+
+  - model_name: lfm-thinking
+    litellm_params:
+      model: openrouter/liquid/lfm-32b-thinking:free
+      api_key: "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"
+
+  - model_name: lfm-instruct
+    litellm_params:
+      model: openrouter/liquid/lfm-40b:free
+      api_key: "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"
+
+# --- Router settings ---
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 3
+  retry_after: 2
+  allowed_fails: 2
+
+# --- Proxy settings ---
+litellm_settings:
+  drop_params: true
+  cache: false
+
+general_settings:
+  master_key: sk-KAIROS

@@ -1,0 +1,12 @@
+out/**
+node_modules/**
+src/**
+.vscode/**
+litellm/**
+**/*.ts
+**/*.map
+**/.gitignore
+**/tsconfig.json
+**/esbuild.js
+README.md
+.vscodeignore
