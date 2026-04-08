@@ -4,7 +4,7 @@ services:
     runtime: docker
     plan: free
     dockerContext: ./litellm
-    dockerfilePath: ./litellm/Dockerfile
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
       - key: LITELLM_MASTER_KEY
