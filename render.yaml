@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: kairos-litellm
+    runtime: docker
+    plan: free
+    dockerContext: ./litellm
+    dockerfilePath: ./litellm/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: LITELLM_MASTER_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY_1
+        sync: false
+      - key: OPENROUTER_API_KEY_2
+        sync: false
+      - key: OPENROUTER_API_KEY_3
+        sync: false

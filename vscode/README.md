@@ -2,7 +2,7 @@
 
 **Multi-Agent · LiteLLM-Routed · Cost-Optimised AI Engineering Assistant for VS Code**
 
-A production-grade VS Code extension that embeds a multi-agent AI system (Planner / Coder / Debugger) powered by a local [LiteLLM](https://github.com/BerriAI/litellm) proxy. Free models first. Streaming responses. Context-aware.
+A production-grade VS Code extension that embeds a multi-agent AI system (Planner / Coder / Debugger) powered by a [LiteLLM](https://github.com/BerriAI/litellm) proxy. Free models first. Streaming responses. Context-aware.
 
 ---
 
@@ -40,6 +40,17 @@ litellm --config litellm/config.yaml --port 4000
 
 Verify it's running: `curl http://localhost:4000/health`
 
+### Deploy LiteLLM on Render
+
+This repo now includes a [`render.yaml`](../render.yaml) blueprint and a [`litellm/Dockerfile`](../litellm/Dockerfile) for the LiteLLM service.
+
+On Render:
+
+1. Create a new Blueprint service from this GitHub repo.
+2. Set `LITELLM_MASTER_KEY`, `OPENROUTER_API_KEY_1`, `OPENROUTER_API_KEY_2`, and `OPENROUTER_API_KEY_3` in the Render environment.
+3. After deploy, copy your Render URL, for example `https://kairos-litellm.onrender.com`.
+4. In VS Code, set `kairos.litellmBaseUrl` to that Render URL.
+
 ### 2. Install the extension (development mode)
 
 ```bash
@@ -56,10 +67,10 @@ Then press `F5` in VS Code to launch the Extension Development Host.
 
 | Setting | Default | Description |
 |---|---|---|
-| `antigravity.litellmBaseUrl` | `http://localhost:4000` | LiteLLM proxy URL |
-| `antigravity.litellmApiKey` | `sk-antigravity` | Proxy master key |
-| `antigravity.defaultModel` | `qwen` | Default model alias |
-| `antigravity.maxContextLines` | `200` | Max file lines to send |
+| `kairos.litellmBaseUrl` | `http://localhost:4000` or `https://your-service.onrender.com` | LiteLLM proxy URL |
+| `kairos.litellmApiKey` | `sk-KAIROS` | Proxy master key |
+| `kairos.defaultModel` | `gpt-oss-120b` | Default model alias |
+| `kairos.maxContextLines` | `200` | Max file lines to send |
 
 ---
 
