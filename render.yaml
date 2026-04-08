@@ -3,8 +3,8 @@ services:
     name: kairos-litellm
     runtime: docker
     plan: free
-    dockerContext: ./litellm
-    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerfilePath: ./litellm/Dockerfile
     healthCheckPath: /health
     envVars:
       - key: LITELLM_MASTER_KEY
