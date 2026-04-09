@@ -1,4 +1,4 @@
-FROM ghcr.io/berriai/litellm:main-latest-slim
+FROM ghcr.io/berriai/litellm:main-latest
 
 COPY litellm/config.yaml /app/config.yaml
 COPY litellm/start.sh /app/start.sh
