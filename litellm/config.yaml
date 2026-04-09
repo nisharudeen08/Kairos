@@ -107,3 +107,4 @@ litellm_settings:
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
+  allow_health_check_no_auth: true
