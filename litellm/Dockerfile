@@ -2,8 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install only the core litellm package
-RUN pip install --no-cache-dir litellm
+# Install litellm with proxy support
+RUN pip install --no-cache-dir 'litellm[proxy]'
 
 # Copy config and script
 COPY litellm/config.yaml /app/config.yaml
