@@ -1,10 +1,10 @@
 #!/bin/sh
 set -eu
 
-# Extreme Memory optimization for 512MB RAM
-export MALLOC_ARENA_MAX=2
-export PYTHONMALLOC=malloc
+# Memory optimization
 export UVICORN_WORKER_COUNT=1
+export PYTHONMALLOC=malloc
 
-echo "Starting LiteLLM with strict memory limits on port ${PORT:-4000}..."
-exec litellm --config /app/config.yaml --host 0.0.0.0 --port "${PORT:-4000}" --num_workers 1
+echo "Starting Lightweight LiteLLM on port ${PORT:-4000}..."
+# Use python -m to ensure we use the installed package
+exec python3 -m litellm --config /app/config.yaml --host 0.0.0.0 --port "${PORT:-4000}"
