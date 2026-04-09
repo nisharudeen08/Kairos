@@ -222,12 +222,17 @@ export const FALLBACK_GROUPS: Record<string, ModelAlias[]> = {
 export function selectModel(
     intent: TaskIntent,
     estimatedTokens: number,
-    options: { mode: string; reasoningLevel: number; forceClaude?: boolean }
+    options: { mode: string; model?: string; reasoningLevel: number; forceClaude?: boolean }
 ): { alias: ModelAlias; reason: string } {
-    const { mode, reasoningLevel, forceClaude = false } = options;
+    const { mode, model, reasoningLevel, forceClaude = false } = options;
 
     if (forceClaude) {
         return { alias: 'claude', reason: 'force_claude flag set by user' };
+    }
+
+    // ── MANUAL MODEL SELECTION OVERRIDE ──
+    if (model && MODELS[model as ModelAlias]) {
+        return { alias: model as ModelAlias, reason: 'Manual model selection by user' };
     }
 
     // ── HIGH REASONING OVERRIDE ──

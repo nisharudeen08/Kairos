@@ -1,57 +1,115 @@
 // @ts-check
 /// <reference lib="dom" />
 
-///  ─── VS Code API ────────────────────────────────────────────────────────────
 // @ts-ignore
 const vscode = acquireVsCodeApi();
 
-// ─── State ────────────────────────────────────────────────────────────────────
+const modeOptions = [
+  { value: 'agent', label: 'Agent', color: 'rose' },
+  { value: 'fast', label: 'Fast', color: 'indigo' },
+  { value: 'ask', label: 'Ask', color: 'emerald' },
+  { value: 'plan', label: 'Plan', color: 'amber' },
+];
+
+const modelOptions = [
+  { value: 'qwen3-coder', label: 'Qwen 3 Coder' },
+  { value: 'gpt-oss-120b', label: 'GPT OSS 120B' },
+  { value: 'llama-3.3-70b', label: 'Llama 3.3 70B' },
+  { value: 'hermes-405b', label: 'Hermes 405B' },
+  { value: 'stepfun-flash', label: 'StepFun Flash' },
+];
+
+const reasoningLabels = ['Low', 'Med', 'High'];
+
 let isStreaming = false;
-/** Accumulates raw text of the current streaming message */
 let streamBuffer = '';
-/** The <div class="msg-content"> element being streamed into */
-/** @type {any} */
+/** @type {HTMLElement | null} */
 let streamTarget = null;
-/** The blinking cursor element */
-/** @type {any} */
+/** @type {HTMLElement | null} */
 let cursorEl = null;
 
-let currentMode = 'agent';
-let currentReasoningLevel = 2;
+let currentModeIndex = 0;
+let currentModelIndex = 0;
+let currentReasoningLevel = 1;
 
-// ─── DOM refs ─────────────────────────────────────────────────────────────────
-const messagesEl  = /** @type {HTMLElement} */ (document.getElementById('messages'));
-const inputEl     = /** @type {HTMLTextAreaElement} */ (document.getElementById('user-input'));
-const sendBtn     = /** @type {HTMLButtonElement} */ (document.getElementById('btn-send'));
-const reviewBtn   = document.getElementById('btn-review');
+const messagesEl = /** @type {HTMLElement} */ (document.getElementById('messages'));
+const inputEl = /** @type {HTMLTextAreaElement} */ (document.getElementById('user-input'));
+const sendBtn = /** @type {HTMLButtonElement} */ (document.getElementById('btn-send'));
+const clearBtn = document.getElementById('btn-clear');
+const settingsBtn = document.getElementById('btn-settings');
+const modeBtn = document.getElementById('mode-selector-btn');
+const modelBtn = document.getElementById('model-selector-btn');
+const reasoningBtn = document.getElementById('reasoning-selector-btn');
+const modeTextEl = document.getElementById('mode-text');
+const modelTextEl = document.getElementById('model-text');
+const reasoningTextEl = document.getElementById('reasoning-text');
+const fileUploadBtn = document.getElementById('btn-file-upload');
+const fileInput = /** @type {HTMLInputElement} */ (document.getElementById('file-input'));
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-renderEmptyState();
-vscode.postMessage({ type: 'ready' });
+// Dropdowns
+const modeDropdown = document.getElementById('mode-dropdown');
+const modelDropdown = document.getElementById('model-dropdown');
+const modeList = document.getElementById('mode-list');
+const modelList = document.getElementById('model-list');
+
+// Initialize
+syncControls();
+renderDropdowns();
 inputEl.focus();
 
-// ─── Event listeners ──────────────────────────────────────────────────────────
+// Handlers
 sendBtn.addEventListener('click', handleSend);
 
-inputEl.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
+inputEl.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
     handleSend();
   }
 });
 
-// Auto-resize textarea
 inputEl.addEventListener('input', () => {
   inputEl.style.height = 'auto';
-  inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + 'px';
 });
 
-reviewBtn?.addEventListener('click', () => {
-    // Placeholder for review changes logic
-    console.log('Reviewing changes...');
+settingsBtn?.addEventListener('click', () => {
+  vscode.postMessage({ type: 'openSettings' });
 });
 
-// ─── Message from extension ───────────────────────────────────────────────────
+clearBtn?.addEventListener('click', () => {
+  vscode.postMessage({ type: 'clearChat' });
+});
+
+fileUploadBtn?.addEventListener('click', () => {
+  fileInput?.click();
+});
+
+fileInput?.addEventListener('change', handleFileSelect);
+
+// Dropdown Toggling
+modeBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    modeDropdown?.classList.toggle('hidden');
+    modelDropdown?.classList.add('hidden');
+});
+
+modelBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    modelDropdown?.classList.toggle('hidden');
+    modeDropdown?.classList.add('hidden');
+});
+
+// Close dropdowns on outside click
+document.addEventListener('click', () => {
+    modeDropdown?.classList.add('hidden');
+    modelDropdown?.classList.add('hidden');
+});
+
+reasoningBtn?.addEventListener('click', () => {
+  currentReasoningLevel = (currentReasoningLevel % 3) + 1;
+  syncControls();
+});
+
 window.addEventListener('message', (event) => {
   const msg = event.data;
   switch (msg.type) {
@@ -59,7 +117,7 @@ window.addEventListener('message', (event) => {
       handleToken(msg.content);
       break;
     case 'done':
-      handleDone(msg.metadata);
+      handleDone();
       break;
     case 'error':
       handleError(msg.message);
@@ -73,7 +131,77 @@ window.addEventListener('message', (event) => {
   }
 });
 
-// ─── Send ─────────────────────────────────────────────────────────────────────
+// Event Delegation for dropdowns
+modeList?.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-index]');
+    if (item) {
+        const index = parseInt(item.getAttribute('data-index'));
+        setMode(index);
+    }
+});
+
+modelList?.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-index]');
+    if (item) {
+        const index = parseInt(item.getAttribute('data-index'));
+        setModel(index);
+    }
+});
+
+function renderDropdowns() {
+    if (modeList) {
+        modeList.innerHTML = modeOptions.map((opt, i) => `
+            <div data-index="${i}" class="flex items-center gap-2 p-2 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
+                <span class="material-symbols-outlined text-sm ${opt.color ? 'text-' + opt.color + '-400' : ''}">bolt</span>
+                ${opt.label}
+            </div>
+        `).join('');
+    }
+    if (modelList) {
+        modelList.innerHTML = modelOptions.map((opt, i) => `
+            <div data-index="${i}" class="flex items-center gap-2 p-2 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
+                <span class="material-symbols-outlined text-sm text-slate-500">neurology</span>
+                ${opt.label}
+            </div>
+        `).join('');
+    }
+}
+
+function setMode(index) {
+    currentModeIndex = index;
+    syncControls();
+    modeDropdown?.classList.add('hidden');
+}
+
+function setModel(index) {
+    currentModelIndex = index;
+    syncControls();
+    modelDropdown?.classList.add('hidden');
+}
+
+function syncControls() {
+  const mode = modeOptions[currentModeIndex];
+  const model = modelOptions[currentModelIndex];
+  
+  if (modeTextEl) modeTextEl.textContent = mode.label;
+  if (modelTextEl) modelTextEl.textContent = model.label;
+  if (reasoningTextEl) reasoningTextEl.textContent = reasoningLabels[currentReasoningLevel - 1];
+
+  // Update mode button colors dynamically
+  if (modeBtn) {
+    modeBtn.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all uppercase tracking-wider border `;
+    
+    let colorClass = '';
+    switch (mode.color) {
+        case 'emerald': colorClass = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'; break;
+        case 'amber': colorClass = 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20'; break;
+        case 'rose': colorClass = 'bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20'; break;
+        default: colorClass = 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20';
+    }
+    modeBtn.className += colorClass;
+  }
+}
+
 function handleSend() {
   const text = inputEl.value.trim();
   if (!text || isStreaming) return;
@@ -85,37 +213,28 @@ function handleSend() {
   inputEl.style.height = 'auto';
 
   beginStream();
-  vscode.postMessage({ 
-    type: 'userMessage', 
-    text, 
-    mode: currentMode, 
-    reasoningLevel: currentReasoningLevel 
+  vscode.postMessage({
+    type: 'userMessage',
+    text,
+    mode: modeOptions[currentModeIndex].value,
+    model: modelOptions[currentModelIndex].value,
+    reasoningLevel: currentReasoningLevel,
   });
 }
 
-// ─── Streaming lifecycle ──────────────────────────────────────────────────────
 function beginStream() {
   isStreaming = true;
   streamBuffer = '';
   sendBtn.disabled = true;
+  
+  const wrapper = createEl('div', 'flex flex-col items-start w-full gap-2 animation-slide-up');
+  const bubble = createEl('div', 'p-4 rounded-2xl bg-white/5 border border-white/10 text-[13px] text-slate-200 leading-relaxed max-w-[90%]');
+  const content = createEl('div', 'prose prose-invert max-w-none');
+  content.id = 'stream-content';
 
-  // Create the agent message container
-  const wrapper = createEl('div', 'message agent');
-  const bubble  = createEl('div', 'bubble-agent');
-
-  // Placeholder header (filled in by handleDone)
-  const header  = createEl('div', 'agent-header placeholder-header');
-  header.id     = 'stream-header';
-
-  // Content area
-  const content = createEl('div', 'msg-content');
-  content.id    = 'stream-content';
-
-  // Blinking cursor
-  cursorEl = createEl('span', 'cursor');
+  cursorEl = createEl('span', 'inline-block w-1.5 h-4 bg-primary ml-1 rounded-sm animate-pulse');
   content.appendChild(cursorEl);
 
-  bubble.appendChild(header);
   bubble.appendChild(content);
   wrapper.appendChild(bubble);
   wrapper.id = 'stream-message';
@@ -128,41 +247,38 @@ function beginStream() {
 /** @param {string} content */
 function handleToken(content) {
   if (!streamTarget) return;
+
   streamBuffer += content;
 
-  // Remove cursor, re-render raw text inline, re-add cursor
   if (cursorEl && streamTarget.contains(cursorEl)) {
     streamTarget.removeChild(cursorEl);
   }
-  streamTarget.textContent = streamBuffer;
-  streamTarget.appendChild(cursorEl);
+
+  // Very basic markdown rendering for tokens to keep it fast
+  streamTarget.innerHTML = renderMarkdown(streamBuffer);
+  
+  if (cursorEl) {
+    streamTarget.appendChild(cursorEl);
+  }
+
   scrollToBottom();
 }
 
-/** @param {any} metadata */
-function handleDone(metadata) {
+function handleDone() {
   isStreaming = false;
   sendBtn.disabled = false;
 
-  // Remove cursor
   if (cursorEl && streamTarget?.contains(cursorEl)) {
     streamTarget.removeChild(cursorEl);
-    cursorEl = null;
   }
 
-  // Render markdown now that streaming is complete
+  cursorEl = null;
   if (streamTarget) {
     streamTarget.innerHTML = renderMarkdown(streamBuffer);
-    streamBuffer = '';
-    streamTarget = null;
   }
 
-  // Populate agent header
-  const header = document.getElementById('stream-header');
-  if (header && metadata) {
-    header.id = '';
-    header.innerHTML = buildAgentHeader(metadata);
-  }
+  streamBuffer = '';
+  streamTarget = null;
 
   const msgEl = document.getElementById('stream-message');
   if (msgEl) msgEl.id = '';
@@ -175,25 +291,22 @@ function handleError(message) {
   isStreaming = false;
   sendBtn.disabled = false;
 
-  // Remove in-progress stream message
-  const streamMsg = document.getElementById('stream-message');
-  if (streamMsg) streamMsg.remove();
+  document.getElementById('stream-message')?.remove();
   streamTarget = null;
   cursorEl = null;
 
-  const wrapper = createEl('div', 'message agent');
-  const bubble  = createEl('div', 'bubble-error');
-  bubble.innerHTML = `<strong>⚠ Error</strong><br>${escapeHtml(message)}`;
+  const wrapper = createEl('div', 'flex flex-col items-start w-full gap-2');
+  const bubble = createEl('div', 'p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-[12px] text-red-400');
+  bubble.innerHTML = `<div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-sm">error</span><strong>Error</strong></div>${escapeHtml(message)}`;
   wrapper.appendChild(bubble);
   messagesEl.appendChild(wrapper);
   scrollToBottom();
 }
 
-// ─── DOM helpers ──────────────────────────────────────────────────────────────
 /** @param {string} text */
 function appendUserMessage(text) {
-  const wrapper = createEl('div', 'message user');
-  const bubble  = createEl('div', 'bubble-user');
+  const wrapper = createEl('div', 'flex flex-col items-end w-full gap-2 animation-slide-up');
+  const bubble = createEl('div', 'px-5 py-3 rounded-2xl bg-primary text-slate-900 text-[13px] font-medium shadow-lg shadow-primary/10 max-w-[85%]');
   bubble.textContent = text;
   wrapper.appendChild(bubble);
   messagesEl.appendChild(wrapper);
@@ -202,10 +315,11 @@ function appendUserMessage(text) {
 
 /** @param {string} text */
 function appendSystemMessage(text) {
-  const wrapper = createEl('div', 'message system message-system');
-  const bubble  = createEl('div', 'bubble-system');
-  bubble.innerHTML = renderMarkdown(text);
-  wrapper.appendChild(bubble);
+  removeEmptyState();
+  const wrapper = createEl('div', 'flex justify-center w-full py-2');
+  const pill = createEl('div', 'px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] text-slate-400');
+  pill.innerHTML = text;
+  wrapper.appendChild(pill);
   messagesEl.appendChild(wrapper);
   scrollToBottom();
 }
@@ -216,100 +330,75 @@ function clearMessages() {
 }
 
 function renderEmptyState() {
-  const el = createEl('div', '');
-  el.id = 'empty-state';
-  el.innerHTML = `
-    <div class="empty-icon">⚡</div>
-    <div class="empty-title">KAIROS AI</div>
-    <div class="empty-subtitle">Simple · Elegant · Powerful</div>
-    <div class="empty-hints">
-      <button class="hint-chip" data-prompt="/fix Fix the error in the active file">🔧 Fix this file</button>
-      <button class="hint-chip" data-prompt="/explain Explain the selected code">💡 Explain code</button>
-    </div>
-  `;
-  // Wire up hint chips
-  el.querySelectorAll('.hint-chip').forEach((chipArg) => {
-    const chip = /** @type {HTMLElement} */(chipArg);
-    chip.addEventListener('click', () => {
-      const prompt = chip.getAttribute('data-prompt');
-      if (prompt) {
-        inputEl.value = prompt;
-        handleSend();
-      }
-    });
-  });
-  messagesEl.appendChild(el);
+   // Already in HTML, handled by showing/hiding if needed or just letting it be if messages are empty.
+   // But we re-add it if all messages are cleared.
+    messagesEl.innerHTML = `
+      <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center max-w-[280px] mx-auto space-y-4">
+        <div class="w-16 h-16 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10">
+          <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
+        </div>
+        <div class="space-y-1">
+          <h2 class="text-white font-bold">How can I help today?</h2>
+          <p class="text-[12px] text-slate-400 leading-relaxed">I can help you build, test, or debug your codebase using the latest AI models.</p>
+        </div>
+        <div class="grid grid-cols-1 gap-2 w-full pt-4">
+            <div class="p-3 rounded-xl bg-white/2 border border-white/5 text-left flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group">
+                <span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-colors">terminal</span>
+                <span class="text-[11px] text-slate-400">Explain this file structure</span>
+            </div>
+             <div class="p-3 rounded-xl bg-white/2 border border-white/5 text-left flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group">
+                <span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-colors">bug_report</span>
+                <span class="text-[11px] text-slate-400">Find security vulnerabilities</span>
+            </div>
+        </div>
+      </div>
+    `;
 }
 
 function removeEmptyState() {
   document.getElementById('empty-state')?.remove();
 }
 
-// ─── Badge & header builders ──────────────────────────────────────────────────
-/** @param {any} metadata */
-function buildAgentHeader(metadata) {
-  const agentClass = (metadata.agent || 'Agent').toLowerCase();
-  const agentIcon = agentClass === 'planner' ? '🧠' : agentClass === 'coder' ? '💻' : '🔍';
-
-  return `
-    <span class="badge badge-agent ${agentClass}">${agentIcon} ${escapeHtml(metadata.agent || 'Agent')}</span>
-    <span class="badge badge-model">⚙ ${escapeHtml(metadata.modelLabel || 'AI')}</span>
-  `;
-}
-
-// ─── Markdown renderer (dependency-free) ──────────────────────────────────────
 /** @param {string} text */
 function renderMarkdown(text) {
   let html = escapeHtml(text);
 
-  // Fenced code blocks (``` lang\n...\n```)
+  // Fenced code blocks
   html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const highlighted = highlightCode(code.trim(), lang);
-    return `<pre><code>${highlighted}</code></pre>`;
+    return `<div class="my-4 rounded-xl overflow-hidden bg-slate-900 border border-white/10">
+      <div class="px-4 py-1.5 bg-white/5 border-b border-white/5 flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">${lang || 'code'}</span>
+      </div>
+      <pre class="p-4 overflow-x-auto text-[12px] font-mono leading-relaxed text-slate-300"><code>${escapeHtml(code.trim())}</code></pre>
+    </div>`;
   });
 
   // Inline code
-  html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-
+  html = html.replace(/`([^`\n]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-white/10 text-primary-light font-mono text-[0.9em]">$1</code>');
+  
   // Headers
-  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-  // Bold
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Italic
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-  // Unordered lists
-  html = html.replace(/^[•\-\*] (.+)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>(\n|$))+/g, (m) => `<ul>${m}</ul>`);
-
+  html = html.replace(/^### (.+)$/gm, '<h3 class="text-white font-bold text-base mt-4 mb-2">$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2 class="text-white font-bold text-lg mt-6 mb-3 border-b border-white/5 pb-1">$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1 class="text-white font-bold text-xl mt-8 mb-4">$1</h1>');
+  
+  // Bold/Italic
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em class="text-slate-400">$1</em>');
+  
+  // Lists
+  html = html.replace(/^[\-\*] (.+)$/gm, '<li class="ml-4 list-disc text-slate-300">$1</li>');
+  
   // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank">$1</a>');
+  
   // Paragraphs
-  html = html.replace(/\n{2,}/g, '</p><p>');
-  html = `<p>${html}</p>`;
+  html = html.replace(/\n{2,}/g, '</p><p class="mb-3">');
+  html = html.replace(/\n/g, '<br>');
 
-  return html;
+  return `<p class="mb-3">${html}</p>`;
 }
 
-/** 
- * Minimal syntax highlighter
- * @param {string} code 
- * @param {string} lang 
- */
-function highlightCode(code, lang) {
-  let h = code;
-  if (['js', 'javascript', 'ts', 'typescript'].includes(lang)) {
-    h = h.replace(/\b(const|let|var|function|return|if|else|for|while)\b/g, '<span class="token-keyword">$1</span>');
-  }
-  return h;
-}
-
-// ─── Utilities ─────────────────────────────────────────────────────────────────
-/** @param {any} str */
+/** @param {unknown} str */
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -319,9 +408,9 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-/** 
- * @param {string} tag 
- * @param {string} className 
+/**
+ * @param {string} tag
+ * @param {string} className
  */
 function createEl(tag, className) {
   const el = document.createElement(tag);
@@ -331,4 +420,15 @@ function createEl(tag, className) {
 
 function scrollToBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+/** @param {Event} event */
+function handleFileSelect(event) {
+  const target = /** @type {HTMLInputElement} */ (event.target);
+  const files = target.files;
+  if (files && files.length > 0) {
+    const fileNames = Array.from(files).map(f => f.name).join(', ');
+    appendSystemMessage(`<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">attach_file</span> ${files.length} file(s) selected: ${fileNames}</span>`);
+    target.value = '';
+  }
 }

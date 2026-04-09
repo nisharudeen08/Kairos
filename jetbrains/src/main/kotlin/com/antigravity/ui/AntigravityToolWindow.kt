@@ -91,10 +91,14 @@ class AntigravityToolWindow(private val project: Project) {
             val textEnd = json.indexOf("\"", textStart)
             val prompt = json.substring(textStart, textEnd)
 
+            val modelStart = json.indexOf("\"model\":\"") + 9
+            val modelEnd = json.indexOf("\"", modelStart)
+            val selectedModel = if (modelStart > 8) json.substring(modelStart, modelEnd) else "gpt-oss-120b"
+
             // For now, solve synchronously and post back to JS
             // In a real version, we would background this and use browser.executeJavaScript()
             Thread {
-                val responseJson = client.completeSync("gpt-oss-120b", prompt)
+                val responseJson = client.completeSync(selectedModel, prompt)
                 
                 // Extract only the content from the response JSON (LiteLLM format)
                 // {"choices":[{"message":{"content":"..."}}]}
@@ -104,7 +108,7 @@ class AntigravityToolWindow(private val project: Project) {
 
                 // Pass back to Webview
                 val js = "window.antigravityReceiveMessage({ \"type\": \"token\", \"content\": \"$content\" });" +
-                         "window.antigravityReceiveMessage({ \"type\": \"done\", \"metadata\": { \"agent\": \"Planner\", \"modelLabel\": \"GPT-OSS-120B\", \"confidence\": \"High\", \"modelReason\": \"Local Proxy\" } });"
+                         "window.antigravityReceiveMessage({ \"type\": \"done\", \"metadata\": { \"agent\": \"Planner\", \"modelLabel\": \"${selectedModel.uppercase()}\", \"confidence\": \"High\", \"modelReason\": \"Local Proxy\" } });"
                 
                 browser.executeJavaScript(js, browser.cefBrowser.url, 0)
             }.start()

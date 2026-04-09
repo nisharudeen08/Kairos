@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAIROS Chat</title>
+    <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Top Bar -->
+        <div id="top-bar">
+            <div id="top-left-icons">
+                <button id="btn-settings" class="icon-btn" title="Settings" aria-label="Settings">⚙️</button>
+                <button id="btn-clear" class="icon-btn" title="Clear chat" aria-label="Clear chat">🗑️</button>
+            </div>
+            <div id="top-right-icons">
+                <!-- Review button or other controls can go here -->
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="messages"></div>
+
+        <!-- Input Section -->
+        <div id="input-section">
+            <div class="input-container">
+                <!-- Controls (Hidden by default, shown on focus/expand) -->
+                <div class="input-controls" id="controls-bar">
+                    <button id="mode-selector-btn" class="control-btn" title="Agent mode">
+                        <span>🤖</span>
+                        <span id="mode-text">Agent</span>
+                    </button>
+                    <button id="model-selector-btn" class="control-btn" title="AI Model">
+                        <span>🧠</span>
+                        <span id="model-text">Qwen3-Coder</span>
+                    </button>
+                    <button id="reasoning-selector-btn" class="control-btn" title="Reasoning level">
+                        <span>⚡</span>
+                        <span id="reasoning-text">High thinking</span>
+                    </button>
+                </div>
+
+                <!-- Input Row - Main focus area -->
+                <div class="input-wrapper">
+                    <textarea
+                        id="user-input"
+                        placeholder="Ask anything, @ to mention, / for workflows..."
+                        rows="1"
+                    ></textarea>
+                    <div class="action-buttons">
+                        <button id="btn-file-upload" title="Upload file" aria-label="Upload file">📎</button>
+                        <input type="file" id="file-input" multiple />
+                        <button id="btn-send" title="Send message (Enter)" aria-label="Send message">
+                            <span>Send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+</html>

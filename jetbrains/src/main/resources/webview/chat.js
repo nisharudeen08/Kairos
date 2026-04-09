@@ -1,97 +1,166 @@
-// ─── IDE Bridge (VS Code + JetBrains parity) ──────────────────────────────
-const ide = (typeof acquireVsCodeApi !== 'undefined')
+const ide = typeof acquireVsCodeApi !== 'undefined'
   ? acquireVsCodeApi()
   : {
       postMessage: (msg) => {
         if (window.cefQuery) {
-          // JetBrains JBCef uses cefQuery for JS -> Kotlin communication
           window.cefQuery({
             request: JSON.stringify(msg),
-            onSuccess: (response) => {},
-            onFailure: (error) => {
-              console.error('JBCef Query Error:', error);
-            }
+            onSuccess: () => {},
+            onFailure: (error) => console.error('JBCef Query Error:', error),
           });
         } else {
-          console.warn('No IDE bridge found (window.cefQuery missing)');
+          console.warn('No IDE bridge found');
         }
-      }
+      },
     };
 
-// Enable JetBrains -> JS communication via a global receiver
-window.KAIROSReceiveMessage = (data) => {
+window.antigravityReceiveMessage = (data) => {
   window.dispatchEvent(new MessageEvent('message', {
-    data: typeof data === 'string' ? JSON.parse(data) : data
+    data: typeof data === 'string' ? JSON.parse(data) : data,
   }));
 };
 
-// ─── State ────────────────────────────────────────────────────────────────────
+const modeOptions = [
+  { value: 'fast', label: 'Fast' },
+  { value: 'ask', label: 'Ask' },
+  { value: 'plan', label: 'Plan' },
+  { value: 'agent', label: 'Agent' },
+  { value: 'full', label: 'Full' },
+];
+
+const modelOptions = [
+  { value: 'qwen3-coder', label: 'Qwen3-Coder' },
+  { value: 'gpt-oss-120b', label: 'GPT-OSS-120B' },
+  { value: 'llama-3.3-70b', label: 'Llama-3.3-70B' },
+  { value: 'hermes-405b', label: 'Hermes-405B' },
+];
+
+const reasoningLabels = ['Low thinking', 'Medium thinking', 'High thinking'];
+
 let isStreaming = false;
 let streamBuffer = '';
 let streamTarget = null;
 let cursorEl = null;
-
-let currentMode = 'agent';
+let currentModeIndex = 0;
+let currentModelIndex = 0;
 let currentReasoningLevel = 2;
 
-// ─── DOM refs ─────────────────────────────────────────────────────────────────
-const messagesEl  = document.getElementById('messages');
-const inputEl     = document.getElementById('user-input');
-const sendBtn     = document.getElementById('btn-send');
-const clearBtn    = document.getElementById('btn-clear');
-const settingsBtn = document.getElementById('btn-settings');
-const statusBar   = document.getElementById('status-bar');
-const statusText  = document.getElementById('status-text');
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('user-input');
+const sendBtn = document.getElementById('btn-send');
+const modeBtn = document.getElementById('mode-selector-btn');
+const modelBtn = document.getElementById('model-selector-btn');
+const reasoningBtn = document.getElementById('reasoning-selector-btn');
+const modeTextEl = document.getElementById('mode-text');
+const modelTextEl = document.getElementById('model-text');
+const reasoningTextEl = document.getElementById('reasoning-text');
 
-const modeBtns        = document.querySelectorAll('.mode-btn');
-const reasoningSlider = document.getElementById('reasoning-slider');
-const reasoningVal    = document.getElementById('reasoning-val');
+// Selectors
+const modeDropdown = document.getElementById('mode-dropdown');
+const modelDropdown = document.getElementById('model-dropdown');
+const modeList = document.getElementById('mode-list');
+const modelList = document.getElementById('model-list');
+const fileUploadBtn = document.getElementById('btn-file-upload');
+const fileInput = document.getElementById('file-input');
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-renderEmptyState();
-ide.postMessage({ type: 'ready' });
+// Initialize
+syncControls();
+renderDropdowns();
 inputEl.focus();
 
-// ─── Event listeners ──────────────────────────────────────────────────────────
+// Handlers
 sendBtn.addEventListener('click', handleSend);
 
-inputEl.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
+inputEl.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
     handleSend();
   }
 });
 
-modeBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    modeBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentMode = btn.getAttribute('data-mode') || 'agent';
-    inputEl.focus();
-  });
-});
-
-reasoningSlider?.addEventListener('input', () => {
-  const val = parseInt(reasoningSlider.value);
-  currentReasoningLevel = val;
-  const labels = { 1: 'Low', 2: 'Med', 3: 'High' };
-  if (reasoningVal) reasoningVal.textContent = labels[val];
-});
-
 inputEl.addEventListener('input', () => {
   inputEl.style.height = 'auto';
-  inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
 });
 
-clearBtn?.addEventListener('click', () => {
-  ide.postMessage({ type: 'clearChat' });
+fileUploadBtn?.addEventListener('click', () => {
+  fileInput?.click();
 });
 
-settingsBtn?.addEventListener('click', () => {
-  ide.postMessage({ type: 'openSettings' });
+fileInput?.addEventListener('change', (e) => {
+  const files = e.target.files;
+  if (files && files.length > 0) {
+    appendSystemMessage(`📎 ${files.length} file(s) selected: ${Array.from(files).map(f => f.name).join(', ')}`);
+  }
 });
 
-// ─── Message from extension ───────────────────────────────────────────────────
+// Dropdown Toggling
+modeBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  modeDropdown?.classList.toggle('hidden');
+  modelDropdown?.classList.add('hidden');
+});
+
+modelBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  modelDropdown?.classList.toggle('hidden');
+  modeDropdown?.classList.add('hidden');
+});
+
+// Close on outside click
+document.addEventListener('click', () => {
+  modeDropdown?.classList.add('hidden');
+  modelDropdown?.classList.add('hidden');
+});
+
+// Event Delegation for dropdowns
+modeList?.addEventListener('click', (e) => {
+  const item = e.target.closest('[data-index]');
+  if (item) {
+    const index = parseInt(item.getAttribute('data-index'));
+    setMode(index);
+  }
+});
+
+modelList?.addEventListener('click', (e) => {
+  const item = e.target.closest('[data-index]');
+  if (item) {
+    const index = parseInt(item.getAttribute('data-index'));
+    setModel(index);
+  }
+});
+
+function renderDropdowns() {
+  if (modeList) {
+    modeList.innerHTML = modeOptions.map((opt, i) => `
+      <div data-index="${i}" class="flex items-center gap-2 p-2 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
+        <span class="material-symbols-outlined text-sm">bolt</span>
+        ${opt.label}
+      </div>
+    `).join('');
+  }
+  if (modelList) {
+    modelList.innerHTML = modelOptions.map((opt, i) => `
+      <div data-index="${i}" class="flex items-center gap-2 p-2 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
+        <span class="material-symbols-outlined text-sm text-slate-500">neurology</span>
+        ${opt.label}
+      </div>
+    `).join('');
+  }
+}
+
+function setMode(index) {
+  currentModeIndex = index;
+  syncControls();
+  modeDropdown?.classList.add('hidden');
+}
+
+function setModel(index) {
+  currentModelIndex = index;
+  syncControls();
+  modelDropdown?.classList.add('hidden');
+}
+
 window.addEventListener('message', (event) => {
   const msg = event.data;
   switch (msg.type) {
@@ -99,7 +168,7 @@ window.addEventListener('message', (event) => {
       handleToken(msg.content);
       break;
     case 'done':
-      handleDone(msg.metadata);
+      handleDone();
       break;
     case 'error':
       handleError(msg.message);
@@ -113,10 +182,23 @@ window.addEventListener('message', (event) => {
   }
 });
 
-// ─── Send ─────────────────────────────────────────────────────────────────────
+function syncControls() {
+  const mode = modeOptions[currentModeIndex];
+  const model = modelOptions[currentModelIndex];
+  
+  if (modeTextEl) modeTextEl.textContent = mode.label;
+  if (modelTextEl) modelTextEl.textContent = model.label;
+  if (reasoningTextEl) {
+     const level = (currentReasoningLevel || 1);
+     reasoningTextEl.textContent = reasoningLabels[level - 1];
+  }
+}
+
 function handleSend() {
   const text = inputEl.value.trim();
-  if (!text || isStreaming) return;
+  if (!text || isStreaming) {
+    return;
+  }
 
   removeEmptyState();
   appendUserMessage(text);
@@ -125,34 +207,29 @@ function handleSend() {
   inputEl.style.height = 'auto';
 
   beginStream();
-  ide.postMessage({ 
-    type: 'userMessage', 
-    text, 
-    mode: currentMode, 
-    reasoningLevel: currentReasoningLevel 
+  ide.postMessage({
+    type: 'userMessage',
+    text,
+    mode: modeOptions[currentModeIndex].value,
+    model: modelOptions[currentModelIndex].value,
+    reasoningLevel: currentReasoningLevel,
   });
 }
 
-// ─── Streaming lifecycle ──────────────────────────────────────────────────────
 function beginStream() {
   isStreaming = true;
   streamBuffer = '';
   sendBtn.disabled = true;
-  setStatus('streaming', 'Thinking…');
+  sendBtn.classList.add('opacity-60');
 
   const wrapper = createEl('div', 'message agent');
-  const bubble  = createEl('div', 'bubble-agent');
-
-  const header  = createEl('div', 'agent-header placeholder-header');
-  header.id     = 'stream-header';
-
+  const bubble = createEl('div', 'bubble-agent');
   const content = createEl('div', 'msg-content');
-  content.id    = 'stream-content';
+  content.id = 'stream-content';
 
   cursorEl = createEl('span', 'cursor');
   content.appendChild(cursorEl);
 
-  bubble.appendChild(header);
   bubble.appendChild(content);
   wrapper.appendChild(bubble);
   wrapper.id = 'stream-message';
@@ -163,53 +240,46 @@ function beginStream() {
 }
 
 function handleToken(content) {
-  if (!streamTarget) return;
+  if (!streamTarget) {
+    return;
+  }
+
   streamBuffer += content;
 
   if (cursorEl && streamTarget.contains(cursorEl)) {
     streamTarget.removeChild(cursorEl);
   }
+
   streamTarget.textContent = streamBuffer;
-  streamTarget.appendChild(cursorEl);
+  if (cursorEl) {
+    streamTarget.appendChild(cursorEl);
+  }
+
   scrollToBottom();
 }
 
-function handleDone(metadata) {
+function handleDone() {
   isStreaming = false;
   sendBtn.disabled = false;
-  setStatus('ready', 'Ready');
+  sendBtn.classList.remove('opacity-60');
 
   if (cursorEl && streamTarget?.contains(cursorEl)) {
     streamTarget.removeChild(cursorEl);
-    cursorEl = null;
   }
+
+  cursorEl = null;
 
   if (streamTarget) {
     streamTarget.innerHTML = renderMarkdown(streamBuffer);
-    streamBuffer = '';
-    streamTarget = null;
   }
 
-  const header = document.getElementById('stream-header');
-  if (header && metadata) {
-    header.id = '';
-    header.innerHTML = buildAgentHeader(metadata);
-  }
-
-  if (metadata?.risks?.length > 0) {
-    const msgEl = document.getElementById('stream-message');
-    if (msgEl) {
-      const bubble = msgEl.querySelector('.bubble-agent');
-      if (bubble) {
-        const banner = buildRiskBanner(metadata.risks);
-        const h = bubble.querySelector('.agent-header');
-        if (h) h.insertAdjacentHTML('afterend', banner);
-      }
-    }
-  }
+  streamBuffer = '';
+  streamTarget = null;
 
   const msgEl = document.getElementById('stream-message');
-  if (msgEl) msgEl.id = '';
+  if (msgEl) {
+    msgEl.id = '';
+  }
 
   scrollToBottom();
 }
@@ -217,25 +287,24 @@ function handleDone(metadata) {
 function handleError(message) {
   isStreaming = false;
   sendBtn.disabled = false;
-  setStatus('ready', 'Error');
+  sendBtn.classList.remove('opacity-60');
 
-  const streamMsg = document.getElementById('stream-message');
-  if (streamMsg) streamMsg.remove();
+  document.getElementById('stream-message')?.remove();
   streamTarget = null;
   cursorEl = null;
+  streamBuffer = '';
 
   const wrapper = createEl('div', 'message agent');
-  const bubble  = createEl('div', 'bubble-error');
-  bubble.innerHTML = `<strong>⚠ Error</strong><br>${escapeHtml(message)}`;
+  const bubble = createEl('div', 'bubble-error bg-error-container/10 border border-error/20 p-3 rounded-lg text-error text-xs');
+  bubble.innerHTML = `<strong>Error</strong><br>${escapeHtml(message)}`;
   wrapper.appendChild(bubble);
   messagesEl.appendChild(wrapper);
   scrollToBottom();
 }
 
-// ─── DOM helpers ──────────────────────────────────────────────────────────────
 function appendUserMessage(text) {
   const wrapper = createEl('div', 'message user');
-  const bubble  = createEl('div', 'bubble-user');
+  const bubble = createEl('div', 'bubble-user');
   bubble.textContent = text;
   wrapper.appendChild(bubble);
   messagesEl.appendChild(wrapper);
@@ -243,8 +312,9 @@ function appendUserMessage(text) {
 }
 
 function appendSystemMessage(text) {
-  const wrapper = createEl('div', 'message system message-system');
-  const bubble  = createEl('div', 'bubble-system');
+  removeEmptyState();
+  const wrapper = createEl('div', 'message system w-full text-center');
+  const bubble = createEl('div', 'text-[11px] text-[#666] bg-[#1a1a1a] px-3 py-1 rounded-full inline-block');
   bubble.innerHTML = renderMarkdown(text);
   wrapper.appendChild(bubble);
   messagesEl.appendChild(wrapper);
@@ -257,28 +327,16 @@ function clearMessages() {
 }
 
 function renderEmptyState() {
-  const el = createEl('div', '');
+  const el = createEl('div', 'flex-grow flex flex-col items-center justify-center p-8 text-center');
   el.id = 'empty-state';
   el.innerHTML = `
-    <div class="empty-icon">⚡</div>
-    <div class="empty-title">KAIROS AI</div>
-    <div class="empty-subtitle">Multi-agent · LiteLLM-routed · Cost-optimised</div>
-    <div class="empty-hints">
-      <button class="hint-chip" data-prompt="Fix the error in the active file">🔧 Fix the error in the active file</button>
-      <button class="hint-chip" data-prompt="Explain the selected code">💡 Explain the selected code</button>
-      <button class="hint-chip" data-prompt="Generate unit tests for this function">🧪 Generate unit tests for this function</button>
-      <button class="hint-chip" data-prompt="Optimize this code for performance">🚀 Optimize for performance</button>
+    <div class="w-12 h-12 rounded-full border border-outline-variant/30 flex items-center justify-center mb-4">
+      <span class="material-symbols-outlined text-outline/50">rocket_launch</span>
     </div>
+    <p class="text-[#c8c8c8] font-body text-[13px] leading-relaxed max-w-[180px] font-light">
+      Ask anything, @ to mention, / for workflows
+    </p>
   `;
-  el.querySelectorAll('.hint-chip').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      const prompt = chip.getAttribute('data-prompt');
-      if (prompt) {
-        inputEl.value = prompt;
-        handleSend();
-      }
-    });
-  });
   messagesEl.appendChild(el);
 }
 
@@ -286,78 +344,33 @@ function removeEmptyState() {
   document.getElementById('empty-state')?.remove();
 }
 
-function buildAgentHeader(metadata) {
-  const agentClass = metadata.agent.toLowerCase();
-  const agentIcon = agentClass === 'planner' ? '🧠' : agentClass === 'coder' ? '💻' : '🔍';
-  const confClass = metadata.confidence.toLowerCase();
-
-  return `
-    <span class="badge badge-agent ${agentClass}">${agentIcon} ${escapeHtml(metadata.agent)}</span>
-    <span class="badge badge-model" title="${escapeHtml(metadata.modelReason)}">⚙ ${escapeHtml(metadata.modelLabel)}</span>
-    <span class="badge badge-confidence ${confClass}" title="Confidence">🔒 ${escapeHtml(metadata.confidence)}</span>
-  `;
-}
-
-function buildRiskBanner(risks) {
-  const items = risks.map(r => `<li>${escapeHtml(r)}</li>`).join('');
-  return `<div class="risk-banner">⚠ <strong>Risks detected:</strong><ul>${items}</ul></div>`;
-}
-
 function renderMarkdown(text) {
   let html = escapeHtml(text);
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const highlighted = highlightCode(code.trim(), lang);
-    const langLabel = lang ? `<span style="font-size:10px;color:var(--text-faint);float:right">${escapeHtml(lang)}</span>` : '';
-    return `<pre>${langLabel}<code>${highlighted}</code></pre>`;
-  });
-  html = html.replace(/`([^` \n]+)`/g, '<code>$1</code>');
-  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, _lang, code) => `<pre><code>${escapeHtml(code.trim())}</code></pre>`);
+  html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  html = html.replace(/^---$/gm, '<hr>');
-  html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-  html = html.replace(/^[•\-\*] (.+)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>(\n|$))+/g, (m) => `<ul>${m}</ul>`);
-  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-  html = html.replace(/\[ \] /g, '☐ ');
-  html = html.replace(/\[x\] /gi, '☑ ');
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   html = html.replace(/\n{2,}/g, '</p><p>');
-  html = `<p>${html}</p>`;
-  html = html.replace(/<p><\/p>/g, '');
-  html = html.replace(/<p>(<(?:h[1-3]|ul|ol|pre|hr|blockquote)[^>]*>)/g, '$1');
-  html = html.replace(/(<\/(?:h[1-3]|ul|ol|pre|hr|blockquote)>)<\/p>/g, '$1');
-  html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
-  return html;
-}
-
-function highlightCode(code, lang) {
-  let h = code;
-  if (['js', 'javascript', 'ts', 'typescript'].includes(lang)) {
-    h = h.replace(/\b(const|let|var|function|async|await|return|import|export|class|if|else|for|while|null|undefined|true|false)\b/g, '<span class="token-keyword">$1</span>')
-         .replace(/(["'`])(.*?)\1/g, '<span class="token-string">$1$2$1</span>')
-         .replace(/\/\/.*/g, '<span class="token-comment">$&</span>');
-  }
-  return h;
+  html = html.replace(/\n/g, '<br>');
+  return `<p>${html}</p>`;
 }
 
 function escapeHtml(str) {
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function createEl(tag, className) {
   const el = document.createElement(tag);
-  if (className) el.className = className;
+  if (className) {
+    el.className = className;
+  }
   return el;
 }
 
 function scrollToBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-function setStatus(state, text) {
-  statusBar.className = state === 'streaming' ? 'streaming' : '';
-  statusText.textContent = text;
 }

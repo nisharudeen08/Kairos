@@ -7,7 +7,7 @@ import { logger } from '../utils/logger';
 
 /** Messages from the webview → extension */
 type InboundMessage =
-    | { type: 'userMessage'; text: string; mode: string, reasoningLevel: number }
+    | { type: 'userMessage'; text: string; mode: string; model: string; reasoningLevel: number }
     | { type: 'clearChat' }
     | { type: 'ready' }
     | { type: 'openSettings' };
@@ -78,7 +78,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
     // ── Public API (used by commands) ─────────────────────────────────────────
 
-    public async sendPrompt(prompt: string, mode = 'agent', reasoningLevel = 2): Promise<void> {
+    public async sendPrompt(prompt: string, mode = 'agent', model = 'qwen3-coder', reasoningLevel = 2): Promise<void> {
         if (!this._view) {
             await vscode.commands.executeCommand('KAIROS.chatView.focus');
             // Give the webview time to mount
@@ -88,7 +88,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             vscode.window.showErrorMessage('KAIROS: Could not open chat panel.');
             return;
         }
-        await this._processUserMessage(prompt, mode, reasoningLevel);
+        await this._processUserMessage(prompt, mode, model, reasoningLevel);
     }
 
     public clearChat(): void {
@@ -101,16 +101,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private async _handleMessage(message: InboundMessage): Promise<void> {
         switch (message.type) {
             case 'userMessage':
-                await this._processUserMessage(message.text, message.mode, message.reasoningLevel);
+                await this._processUserMessage(message.text, message.mode, message.model, message.reasoningLevel);
                 break;
             case 'clearChat':
                 this.clearChat();
                 break;
             case 'ready':
-                this._post({
-                    type: 'systemMessage',
-                    text: '**KAIROS AI** is ready. Select a mode and start building.',
-                });
                 break;
             case 'openSettings':
                 await vscode.commands.executeCommand(
@@ -121,7 +117,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _processUserMessage(text: string, mode: string, reasoningLevel: number): Promise<void> {
+    private async _processUserMessage(text: string, mode: string, model: string, reasoningLevel: number): Promise<void> {
         if (this._isStreaming) {
             this._post({
                 type: 'systemMessage',
@@ -155,7 +151,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                     this._post({ type: 'error', message });
                     logger.error(`[Orchestrator] ${message}`);
                 },
-            }, { mode, reasoningLevel });
+            }, { mode, model, reasoningLevel });
         } catch (err) {
             this._isStreaming = false;
             const msg = err instanceof Error ? err.message : String(err);
@@ -188,81 +184,172 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     // ── HTML generation ───────────────────────────────────────────────────────
 
     private _getHtml(webview: vscode.Webview): string {
+        const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'chat.js'));
+        const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'chat.css'));
         const nonce = getNonce();
 
-        const cssUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this._extensionUri, 'media', 'chat.css')
-        );
-        const jsUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this._extensionUri, 'media', 'chat.js')
-        );
-
-        const csp = [
-            `default-src 'none'`,
-            `style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com`,
-            `script-src 'nonce-${nonce}'`,
-            `img-src ${webview.cspSource} data: https:`,
-            `font-src ${webview.cspSource} data: https://fonts.gstatic.com`,
-        ].join('; ');
-
         return /* html */ `<!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="${csp}">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; script-src 'nonce-${nonce}' https://cdn.tailwindcss.com 'unsafe-inline'; font-src ${webview.cspSource} https://fonts.gstatic.com; img-src ${webview.cspSource} https:;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KAIROS AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script nonce="${nonce}">
+    console.log('Antigravity UI Redesign v1.3 - Loaded');
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: { 
+            primary: '#b8a9ff',
+            'primary-dark': '#8b5cf6',
+            surface: '#0a0d1a'
+          }
+        }
+      }
+    }
+  </script>
   <link rel="stylesheet" href="${cssUri}">
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      background: radial-gradient(circle at top, rgba(124, 58, 237, 0.12), transparent 25%),
+                  linear-gradient(180deg, #090b14 0%, #121826 60%, #0a0d17 100%);
+    }
+    .glass-panel {
+      background: rgba(10, 13, 26, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+    
+    /* Hover effects for pills */
+    .selector-pill {
+      @apply flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[11px] font-medium text-slate-300 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20 hover:text-white;
+    }
+    .selector-pill.active {
+      @apply bg-primary/20 border-primary/30 text-primary;
+    }
+  </style>
 </head>
-<body>
-  <div id="app">
-    <header id="top-bar">
-      <div id="top-left-icons">
-        <button class="icon-btn" title="Files"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M14,2H6C4.89,2 4,2.89 4,4V20C4,21.11 4.89,22 6,22H18C19.11,22 20,21.11 20,20V8L14,2M13,9V3.5L18.5,9H13Z"/></svg></button>
-        <button class="icon-btn" title="Terminal"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20,19H4V5H20M20,3H4C2.89,3 2,3.89 2,5V19C2,20.11 2.89,21 4,21H20C21.11,21 22,20.11 22,19V5C22,3.89 21.11,3 20,3M13,17H17V15H13V17M9.58,13L12,10.59L9.58,8.17L8.17,9.58L9.17,10.59L8.17,11.59L9.58,13Z"/></svg></button>
-        <button class="icon-btn" title="Modules"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5Z"/></svg></button>
-        <button class="icon-btn" title="Web"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16.36,14C16.44,13.34 16.5,12.68 16.5,12C16.5,11.32 16.44,10.66 16.36,10H19.74C19.9,10.64 20,11.31 20,12C20,12.69 19.9,13.36 19.74,14M14.59,19.56C15.19,18.45 15.65,17.25 15.97,16H18.92C17.96,17.65 16.43,18.93 14.59,19.56M14.34,14H9.66C9.56,13.34 9.5,12.68 9.5,12C9.5,11.32 9.56,10.66 9.66,10H14.34C14.44,10.66 14.5,11.32 14.5,12C14.5,12.68 14.44,13.34 14.34,14M12,19.96C11.17,18.76 10.5,17.43 10.09,16H13.91C13.5,17.43 12.83,18.76 12,19.96M8,12C8,12.68 8.06,13.34 8.14,14H4.26C4.1,13.36 4,12.69 4,12C4,11.31 4.1,10.64 4.26,10H8.14C8.06,10.66 8,11.32 8,12M4.08,6.5H7.74C8.28,5.17 8.97,3.91 9.81,2.82C8,3.45 6.43,4.78 5.38,6.5M10.12,2.29L10.12,2.29C11.53,4.83 12.33,7.76 12.5,10.84C12.52,11.23 12.5,11.62 12.5,12C12.5,12.38 12.52,12.77 12.5,13.16C12.33,16.24 11.53,19.17 10.12,21.71L10.12,21.71L10.11,21.72C9.46,19.23 9,16.63 8.78,14H6V10H8.78C9,7.37 9.46,4.77 10.11,2.28L10.11,2.28L10.12,2.29M12,2.04C12.83,3.24 13.5,4.57 13.91,6H10.09C10.5,4.57 11.17,3.24 12,2.04M18.92,8H15.97C15.65,6.75 15.19,5.55 14.59,4.44C16.43,5.07 17.96,6.35 18.92,8Z"/></svg></button>
+<body class="h-screen overflow-hidden flex flex-col p-3 gap-3">
+  <div id="panel" class="flex flex-col flex-1 rounded-2xl overflow-hidden glass-panel">
+    <!-- Top Bar -->
+    <div id="top-bar" class="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-white/2">
+      <div id="title-group" class="flex flex-col">
+        <p class="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-0.5">Kairos Agent</p>
+        <h1 class="text-sm font-bold text-white flex items-center gap-2">
+          New Conversation
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
+        </h1>
       </div>
-      <div id="top-right-actions">
-        <button id="btn-review" class="review-btn">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-          Review Changes
+      <div class="flex items-center gap-2">
+        <button id="btn-clear" class="px-3 py-1.5 text-[11px] font-medium rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors">Clear</button>
+        <button id="btn-settings" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+          <span class="material-symbols-outlined text-[18px]">tune</span>
         </button>
       </div>
-    </header>
+    </div>
 
-    <main id="messages"></main>
+    <!-- Messages Area -->
+    <div id="messages" class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
+      <!-- Empty State -->
+      <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center max-w-[280px] mx-auto space-y-4">
+        <div class="w-16 h-16 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10">
+          <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
+        </div>
+        <div class="space-y-1">
+          <h2 class="text-white font-bold">How can I help today?</h2>
+          <p class="text-[12px] text-slate-400 leading-relaxed">I can help you build, test, or debug your codebase using the latest AI models.</p>
+        </div>
+        <div class="grid grid-cols-1 gap-2 w-full pt-4">
+            <div class="p-3 rounded-xl bg-white/2 border border-white/5 text-left flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group">
+                <span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-colors">terminal</span>
+                <span class="text-[11px] text-slate-400">Explain this file structure</span>
+            </div>
+             <div class="p-3 rounded-xl bg-white/2 border border-white/5 text-left flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group">
+                <span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-colors">bug_report</span>
+                <span class="text-[11px] text-slate-400">Find security vulnerabilities</span>
+            </div>
+        </div>
+      </div>
+    </div>
 
-    <footer id="chat-container">
-      <div id="input-box">
-        <textarea
-          id="user-input"
-          placeholder="Ask anything, @ to mention, / for workflows"
-          rows="1"
+    <!-- Input Area -->
+    <div class="p-4 border-t border-white/5 bg-white/2">
+      <div id="input-box" class="relative flex flex-col gap-3 p-3 rounded-2xl bg-[#1a1b26]/60 border border-white/10 focus-within:border-primary/40 focus-within:bg-[#1a1b26]/80 transition-all shadow-inner">
+        <!-- Input wrapper -->
+        <textarea 
+          id="user-input" 
+          placeholder="Ask anything, @ to mention, / for workflows" 
+          rows="1" 
+          style="field-sizing: content;"
+          class="w-full bg-transparent border-none focus:ring-0 text-[13px] text-slate-200 placeholder-slate-500 resize-none min-h-[44px] max-h-[180px] py-1 custom-scrollbar"
         ></textarea>
-        
-        <div id="controls-row">
-          <div id="left-controls">
-            <button class="control-btn plus-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></button>
-            <button class="selector-btn" id="mode-selector-btn">
-              <span>Fast</span>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z"/></svg>
+
+        <!-- Controls Row -->
+        <div class="flex items-center justify-between gap-2 pt-1">
+          <div class="flex items-center flex-wrap gap-2 flex-1">
+            <!-- File Upload -->
+            <button id="btn-file-upload" title="Attach context" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all">
+              <span class="material-symbols-outlined text-[20px]">add_circle</span>
             </button>
-            <button class="selector-btn" id="model-selector-btn">
-              <span>Gemini 3 Flash</span>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z"/></svg>
-            </button>
+            <input type="file" id="file-input" multiple style="display: none;" />
+
+            <div class="h-4 w-px bg-white/10 mx-1"></div>
+
+            <!-- Mode Selector -->
+            <div class="relative group">
+                <div id="mode-selector-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-bold text-indigo-400 cursor-pointer hover:bg-indigo-500/20 transition-all uppercase tracking-wider">
+                    <span class="material-symbols-outlined text-[14px]">bolt</span>
+                    <span id="mode-text">Fast</span>
+                    <span class="material-symbols-outlined text-[12px] opacity-50 transition-opacity">expand_more</span>
+                </div>
+                <!-- Mode Dropdown -->
+                <div id="mode-dropdown" class="hidden absolute bottom-full mb-2 left-0 w-48 rounded-xl bg-[#1a1b26] border border-white/10 shadow-2xl z-50 overflow-hidden">
+                    <div class="p-1" id="mode-list"></div>
+                </div>
+            </div>
+
+            <!-- Model Selector -->
+            <div class="relative group">
+                <div id="model-selector-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-slate-400 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all uppercase tracking-wider">
+                    <span class="material-symbols-outlined text-[14px]">neurology</span>
+                    <span id="model-text">Qwen 3.0</span>
+                    <span class="material-symbols-outlined text-[12px] opacity-50 transition-opacity">expand_more</span>
+                </div>
+                <!-- Model Dropdown -->
+                <div id="model-dropdown" class="hidden absolute bottom-full mb-2 left-0 w-64 rounded-xl bg-[#1a1b26] border border-white/10 shadow-2xl z-50 overflow-hidden">
+                    <div class="p-1" id="model-list"></div>
+                </div>
+            </div>
+
+             <!-- Reasoning Selector -->
+             <div id="reasoning-selector-btn" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-slate-400 cursor-pointer hover:bg-white/10 transition-all uppercase tracking-wider">
+              <span class="material-symbols-outlined text-[14px]">psychology</span>
+              <span id="reasoning-text">Med</span>
+            </div>
           </div>
-          
-          <div id="right-controls">
-            <button class="control-btn mic-btn"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/></svg></button>
-            <button id="btn-send" class="stop-btn">
-              <div class="stop-icon"></div>
+
+          <!-- Send Button (Right Most) -->
+          <div class="flex-shrink-0">
+            <button id="btn-send" title="Send (Enter)" class="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-slate-900 border-none hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(184,169,255,0.3)] disabled:opacity-50 disabled:hover:scale-100">
+               <span class="material-symbols-outlined text-[20px] font-bold">arrow_upward</span>
             </button>
           </div>
         </div>
       </div>
-    </footer>
+      <!-- Footer Info -->
+      <div class="flex items-center justify-center gap-4 mt-3">
+        <p class="text-[9px] text-slate-600 font-medium">✨ Connected to Antigravity AI Cloud</p>
+      </div>
+    </div>
   </div>
 
   <script nonce="${nonce}" src="${jsUri}"></script>

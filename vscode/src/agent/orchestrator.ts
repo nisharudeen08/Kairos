@@ -53,15 +53,15 @@ export class AgentOrchestrator {
         ctx: WorkspaceContext,
         history: ChatMessage[],
         callbacks: OrchestratorCallbacks,
-        options: { mode: string; reasoningLevel: number }
+        options: { mode: string; model: string; reasoningLevel: number }
     ): Promise<void> {
-        const { mode, reasoningLevel } = options;
+        const { mode, model, reasoningLevel } = options;
         
         // ── Layer 1: Classify ────────────────────────────────────────────────
         const classification = classify(userMessage, ctx.diagnostics.length > 0);
         logger.info(
             `[Orchestrator] intent=${classification.intent} ` +
-            `mode=${mode} reasoning=${reasoningLevel} ` +
+            `mode=${mode} model=${model} reasoning=${reasoningLevel} ` +
             `complexity=${classification.complexityScore}(${classification.complexityLevel})`
         );
 
@@ -72,7 +72,7 @@ export class AgentOrchestrator {
         const { alias: selectedAlias, reason } = selectModel(
             classification.intent,
             estimatedTokens,
-            { mode, reasoningLevel }
+            { mode, model, reasoningLevel }
         );
 
         // ── Agent determination ──────────────────────────────────────────────
