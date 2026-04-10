@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Viewer — ide-extension-engineer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 0.8em 2em;
+      display: flex;
+      align-items: center;
+      gap: 1em;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    h1 { color: #58a6ff; margin: 0; font-size: 1.15em; }
+    #skill-label { color: #8b949e; font-size: 0.85em; }
+
+    .summary {
+      margin: 1.5em 2em 0.5em;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1em 1.5em;
+      display: flex;
+      align-items: center;
+      gap: 2em;
+    }
+
+    .rate { font-size: 2.5em; font-weight: bold; }
+    .pass { color: #3fb950; }
+    .fail { color: #f85149; }
+
+    .summary-detail { color: #8b949e; font-size: 0.9em; }
+
+    .controls {
+      display: flex;
+      gap: 0.75em;
+      margin: 1em 2em;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input, select {
+      background: #161b22;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      padding: 0.4em 0.8em;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.9em;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: #58a6ff; }
+    input { min-width: 220px; }
+
+    .count-badge {
+      font-size: 0.8em;
+      color: #8b949e;
+      margin-left: auto;
+    }
+
+    #cards { padding: 0 2em 3em; }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1em 1.2em;
+      margin-bottom: 0.6em;
+      transition: border-color 0.15s;
+    }
+    .card:hover { border-color: #58a6ff44; }
+    .card.all-pass { border-left: 3px solid #3fb950; }
+    .card.some-fail { border-left: 3px solid #f85149; }
+    .card.hidden { display: none; }
+
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5em;
+      margin-bottom: 0.5em;
+      cursor: pointer;
+    }
+
+    .card-id { color: #58a6ff; font-weight: 700; font-size: 0.85em; }
+    .card-category {
+      font-size: 0.72em;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 0.1em 0.4em;
+      color: #8b949e;
+    }
+    .card-prompt { font-weight: 500; flex: 1; }
+    .card-rate { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+
+    .checks { margin-top: 0.3em; }
+    .check {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4em;
+      font-size: 0.82em;
+      margin: 0.15em 0;
+      color: #8b949e;
+    }
+    .check.pass-check { color: #3fb950; }
+    .check.fail-check { color: #f85149; }
+    .check-icon { flex-shrink: 0; }
+
+    details > summary {
+      cursor: pointer;
+      color: #58a6ff;
+      font-size: 0.8em;
+      margin-top: 0.6em;
+      user-select: none;
+      list-style: none;
+    }
+    details > summary::before { content: "▶ "; }
+    details[open] > summary::before { content: "▼ "; }
+    details > summary::-webkit-details-marker { display: none; }
+
+    .output-box {
+      margin-top: 0.4em;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 4px;
+      padding: 0.6em;
+      font-size: 0.78em;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 220px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 3em;
+      color: #8b949e;
+    }
+    .no-results code {
+      background: #21262d;
+      padding: 0.2em 0.5em;
+      border-radius: 4px;
+      color: #79c0ff;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📊 Eval Viewer</h1>
+  <span id="skill-label">ide-extension-engineer</span>
+</header>
+
+<div class="summary" id="summary">
+  <div class="rate" id="overall-rate">—</div>
+  <div>
+    <div style="font-weight:600; font-size:1.05em;">Overall pass rate</div>
+    <div class="summary-detail" id="summary-detail">
+      Run <code style="background:#21262d;padding:.1em .4em;border-radius:4px;color:#79c0ff">
+        python scripts/run_eval.py
+      </code> then reload.
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <input id="search" type="search" placeholder="🔍  Search prompts or expectations…"
+         oninput="applyFilters()">
+  <select id="status-filter" onchange="applyFilters()">
+    <option value="all">All statuses</option>
+    <option value="pass">Passing only</option>
+    <option value="fail">Failing only</option>
+  </select>
+  <select id="category-filter" onchange="applyFilters()">
+    <option value="all">All categories</option>
+  </select>
+  <select id="sort" onchange="applySort()">
+    <option value="id">Sort: ID</option>
+    <option value="rate-asc">Sort: Pass rate ↑</option>
+    <option value="rate-desc">Sort: Pass rate ↓</option>
+  </select>
+  <span class="count-badge" id="visible-count"></span>
+</div>
+
+<div id="cards">
+  <div class="no-results" id="empty-state">
+    <p>No results loaded.</p>
+    <p>Run <code>python scripts/run_eval.py</code> to generate results.</p>
+  </div>
+</div>
+
+<script>
+  let allData = null;
+  let allCards = [];
+
+  // ── Load ──────────────────────────────────────────────────────────────────
+
+  async function loadResults() {
+    try {
+      const r = await fetch('../evals/results.json');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      allData = await r.json();
+      renderAll(allData);
+    } catch (e) {
+      document.getElementById('summary-detail').textContent =
+        `Could not load results.json: ${e.message}`;
+    }
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  function renderAll(data) {
+    const overall = data.overall ?? 0;
+    const results = data.results ?? [];
+
+    // Summary
+    const rateEl = document.getElementById('overall-rate');
+    rateEl.textContent = `${(overall * 100).toFixed(0)}%`;
+    rateEl.className = `rate ${overall >= 0.8 ? 'pass' : 'fail'}`;
+
+    const fullyPassing = results.filter(r => r.pass_rate === 1).length;
+    document.getElementById('summary-detail').textContent =
+      `${results.length} evals · ${fullyPassing} fully passing`;
+
+    // Populate category filter
+    const categories = [...new Set(results.map(r => r.category || 'unspecified'))];
+    const catSel = document.getElementById('category-filter');
+    categories.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      catSel.appendChild(opt);
+    });
+
+    // Render cards
+    const container = document.getElementById('cards');
+    container.innerHTML = '';
+    allCards = [];
+
+    for (const r of results) {
+      const card = buildCard(r);
+      container.appendChild(card);
+      allCards.push(card);
+    }
+
+    applyFilters();
+  }
+
+  function buildCard(r) {
+    const passRate = r.pass_rate ?? 0;
+    const allPass = passRate === 1;
+    const card = document.createElement('div');
+    card.className = `card ${allPass ? 'all-pass' : 'some-fail'}`;
+    card.dataset.id    = r.id;
+    card.dataset.rate  = passRate;
+    card.dataset.cat   = r.category || 'unspecified';
+    card.dataset.prompt = (r.prompt || '').toLowerCase();
+    card.dataset.checks = (r.checks || []).map(c => c.expectation).join(' ').toLowerCase();
+
+    const checksHtml = (r.checks || []).map(c => `
+      <div class="check ${c.passed ? 'pass-check' : 'fail-check'}">
+        <span class="check-icon">${c.passed ? '✓' : '✗'}</span>
+        <span>${esc(c.expectation)}</span>
+      </div>`).join('');
+
+    const passedN = (r.checks || []).filter(c => c.passed).length;
+    const totalN  = (r.checks || []).length;
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="card-id">[${r.id}]</span>
+        <span class="card-category">${esc(r.category || '')}</span>
+        <span class="card-prompt">${esc((r.prompt || '').slice(0, 120))}</span>
+        <span class="card-rate">${passedN}/${totalN}</span>
+      </div>
+      <div class="checks">${checksHtml}</div>
+      <details>
+        <summary>Output</summary>
+        <div class="output-box">${esc((r.output || '').slice(0, 3000))}</div>
+      </details>`;
+
+    return card;
+  }
+
+  // ── Filter + Sort ─────────────────────────────────────────────────────────
+
+  function applyFilters() {
+    const q      = document.getElementById('search').value.toLowerCase();
+    const status = document.getElementById('status-filter').value;
+    const cat    = document.getElementById('category-filter').value;
+    let visible  = 0;
+
+    for (const card of allCards) {
+      const rate       = parseFloat(card.dataset.rate);
+      const matchText  = !q ||
+        card.dataset.prompt.includes(q) ||
+        card.dataset.checks.includes(q);
+      const matchStatus =
+        status === 'all' ||
+        (status === 'pass' && rate === 1) ||
+        (status === 'fail' && rate < 1);
+      const matchCat = cat === 'all' || card.dataset.cat === cat;
+
+      const show = matchText && matchStatus && matchCat;
+      card.classList.toggle('hidden', !show);
+      if (show) visible++;
+    }
+
+    document.getElementById('visible-count').textContent =
+      `${visible} of ${allCards.length} shown`;
+  }
+
+  function applySort() {
+    const sort      = document.getElementById('sort').value;
+    const container = document.getElementById('cards');
+    const cards     = [...container.querySelectorAll('.card')];
+
+    cards.sort((a, b) => {
+      if (sort === 'id')        return +a.dataset.id - +b.dataset.id;
+      if (sort === 'rate-asc')  return +a.dataset.rate - +b.dataset.rate;
+      if (sort === 'rate-desc') return +b.dataset.rate - +a.dataset.rate;
+      return 0;
+    });
+    cards.forEach(c => container.appendChild(c));
+  }
+
+  // ── Utils ─────────────────────────────────────────────────────────────────
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+
+  loadResults();
+</script>
+</body>
+</html>

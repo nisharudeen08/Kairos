@@ -1,0 +1,105 @@
+{
+  "skill_name": "ide-extension-engineer",
+  "version": "1.0.0",
+  "evals": [
+    {
+      "id": 1,
+      "category": "happy-path",
+      "prompt": "Scaffold a VS Code extension with a chat sidebar. It should let users type messages and display streaming responses.",
+      "expected_output": "A complete package.json with contributes.views, plus ChatViewProvider.ts with resolveWebviewView(), message handling, and chat.html with a nonce-secured CSP.",
+      "expectations": [
+        "Output contains 'ChatViewProvider'",
+        "Output contains 'resolveWebviewView'",
+        "Output contains 'enableScripts: true'",
+        "Output contains 'getNonce' or 'nonce'",
+        "Output contains 'Content-Security-Policy'"
+      ]
+    },
+    {
+      "id": 2,
+      "category": "happy-path",
+      "prompt": "Create a JetBrains plugin in Kotlin with a right-side tool window that contains a chat panel.",
+      "expected_output": "plugin.xml with toolWindow extension, ChatToolWindowFactory.kt, ChatPanel.kt using Swing with EDT-safe background threading.",
+      "expectations": [
+        "Output contains 'ToolWindowFactory'",
+        "Output contains 'createToolWindowContent'",
+        "Output contains 'executeOnPooledThread' or 'invokeLater'",
+        "Output contains 'plugin.xml' or '<toolWindow'",
+        "Output contains 'ContentFactory'"
+      ]
+    },
+    {
+      "id": 3,
+      "category": "happy-path",
+      "prompt": "Build an Antigravity skill that helps write Python unit tests. Give me the complete SKILL.md and evals.json.",
+      "expected_output": "A SKILL.md with proper frontmatter (name, trigger-engineered description), numbered steps, quality gates, and an evals.json with 3+ test cases.",
+      "expectations": [
+        "Output contains 'name:'",
+        "Output contains 'description:'",
+        "Output contains 'Triggers include:'",
+        "Output contains 'evals'",
+        "Output contains 'expectations'"
+      ]
+    },
+    {
+      "id": 4,
+      "category": "feature",
+      "prompt": "Add a model selector to both the VS Code and JetBrains versions of my Kairos extension. Options: GPT-4o, Claude 3.5, Gemini Pro.",
+      "expected_output": "VS Code: <select> in chat.html, model sent in postMessage payload. JetBrains: JComboBox in ChatPanel.kt, model passed to send().",
+      "expectations": [
+        "Output contains 'gpt-4o' or 'GPT-4o'",
+        "Output contains 'claude' or 'Claude'",
+        "Output contains 'JComboBox' or 'select'",
+        "Output addresses both VS Code and JetBrains"
+      ]
+    },
+    {
+      "id": 5,
+      "category": "debug",
+      "prompt": "My VS Code extension's webview shows a blank screen. The scripts aren't loading. Here's the relevant code:\n\nwebviewView.webview.options = { localResourceRoots: [this._extensionUri] };\n\nAnd the HTML has: <script src=\"${scriptUri}\"></script>",
+      "expected_output": "Identifies two bugs: enableScripts not set to true, and nonce missing from script tag and CSP. Provides fixed code for both.",
+      "expectations": [
+        "Output contains 'enableScripts: true'",
+        "Output contains 'nonce'",
+        "Output contains 'Content-Security-Policy' or 'CSP'",
+        "Output contains corrected code"
+      ]
+    },
+    {
+      "id": 6,
+      "category": "debug",
+      "prompt": "My JetBrains plugin's UI freezes when I click the action button. The action calls an external API and updates a JTextArea.",
+      "expected_output": "Identifies EDT violation: network call on EDT. Correct fix: move network call to executeOnPooledThread, then update UI with invokeLater.",
+      "expectations": [
+        "Output contains 'EDT' or 'Event Dispatch Thread'",
+        "Output contains 'executeOnPooledThread'",
+        "Output contains 'invokeLater'",
+        "Output explains why freezing occurs"
+      ]
+    },
+    {
+      "id": 7,
+      "category": "edge-case",
+      "prompt": "I want to add an Antigravity skill. I just need the SKILL.md — nothing else. The skill should help debug Python exceptions.",
+      "expected_output": "A complete SKILL.md with YAML frontmatter (name + description following the trigger formula) and numbered implementation steps. Only SKILL.md, as requested.",
+      "expectations": [
+        "Output contains 'name:'",
+        "Output contains 'description:'",
+        "Output contains 'Use this skill when' or 'Triggers include'",
+        "Output contains numbered steps"
+      ]
+    },
+    {
+      "id": 8,
+      "category": "ship",
+      "prompt": "How do I publish my VS Code extension to the marketplace?",
+      "expected_output": "Step-by-step: install vsce, login with publisher, vsce package to test, vsce publish. Includes required package.json fields: publisher, icon, repository, license.",
+      "expectations": [
+        "Output contains 'vsce' or '@vscode/vsce'",
+        "Output contains 'publish'",
+        "Output contains 'publisher'",
+        "Output contains 'package' command or step"
+      ]
+    }
+  ]
+}

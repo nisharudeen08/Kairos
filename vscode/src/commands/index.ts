@@ -22,31 +22,31 @@ export function registerCommands(
         }),
 
         vscode.commands.registerCommand('antigravity.fix', async () => {
-            const ctx = await collectWorkspaceContext('DEBUG');
+            const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('fix', ctx);
             await focusAndSend(provider, prompt);
         }),
 
         vscode.commands.registerCommand('antigravity.explain', async () => {
-            const ctx = await collectWorkspaceContext('ANALYSIS');
+            const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('explain', ctx);
             await focusAndSend(provider, prompt);
         }),
 
         vscode.commands.registerCommand('antigravity.optimize', async () => {
-            const ctx = await collectWorkspaceContext('OPTIMIZATION');
+            const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('optimize', ctx);
             await focusAndSend(provider, prompt);
         }),
 
         vscode.commands.registerCommand('antigravity.generateTests', async () => {
-            const ctx = await collectWorkspaceContext('TESTING');
+            const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('generate tests for', ctx);
             await focusAndSend(provider, prompt);
         }),
 
         vscode.commands.registerCommand('antigravity.refactor', async () => {
-            const ctx = await collectWorkspaceContext('REFACTOR');
+            const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('refactor', ctx);
             await focusAndSend(provider, prompt);
         }),

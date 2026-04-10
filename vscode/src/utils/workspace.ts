@@ -34,9 +34,7 @@ export interface DiagnosticItem {
  * Collects VS Code workspace context to inject into the system prompt.
  * Reads config for maxContextLines to avoid blowing the token budget.
  */
-export async function collectWorkspaceContext(
-    prefillIntent?: string
-): Promise<WorkspaceContext> {
+export async function collectWorkspaceContext(): Promise<WorkspaceContext> {
     const config = vscode.workspace.getConfiguration('antigravity');
     const maxLines: number = config.get('maxContextLines', 200);
     const includeOpenFiles: boolean = config.get('includeOpenFiles', false);

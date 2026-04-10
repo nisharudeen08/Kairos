@@ -1,4 +1,4 @@
-# Antigravity AI - LiteLLM Host Starter Script
+# kairos - LiteLLM Host Starter Script
 # This script starts the LiteLLM proxy locally on Windows.
 
 Write-Host "--- Starting Antigravity AI LiteLLM Host ---" -ForegroundColor Cyan

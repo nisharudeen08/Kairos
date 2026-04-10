@@ -7,10 +7,25 @@ import { logger } from '../utils/logger';
 
 /** Messages from the webview → extension */
 type InboundMessage =
-    | { type: 'userMessage'; text: string; mode: string; model: string; reasoningLevel: number }
+    | { type: 'userMessage'; text: string; mode: string; model: string; reasoningLevel: number; images?: string[] }
     | { type: 'clearChat' }
     | { type: 'ready' }
-    | { type: 'openSettings' };
+    | { type: 'openSettings' }
+    | { type: 'acceptFile'; path: string; content: string }
+    | { type: 'getHistory' }
+    | { type: 'loadSession'; id: string }
+    | { type: 'openTerminal' }
+    | { type: 'openChanges' }
+    | { type: 'reviewChanges' }
+    | { type: 'openWeb' }
+    | { type: 'openArtifacts' };
+
+export interface ChatSession {
+    id: string;
+    title: string;
+    updatedAt: number;
+    history: ChatMessage[];
+}
 
 /** Messages from the extension → webview */
 type OutboundMessage =
@@ -18,7 +33,11 @@ type OutboundMessage =
     | { type: 'done'; metadata: AgentMetadata }
     | { type: 'error'; message: string }
     | { type: 'systemMessage'; text: string }
-    | { type: 'clear' };
+    | { type: 'clear' }
+    | { type: 'fileChange'; path: string; content: string }
+    | { type: 'historyList'; sessions: ChatSession[] }
+    | { type: 'replayUser'; text: string }
+    | { type: 'replayAssistant'; text: string };
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'kairos.chatView';
@@ -27,6 +46,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private _orchestrator?: AgentOrchestrator;
     /** Conversation history — persists for the session */
     private _history: ChatMessage[] = [];
+    private _sessionId: string = Date.now().toString();
     private _isStreaming = false;
 
     constructor(
@@ -35,7 +55,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     ) {
         // Watch for config changes so orchestrator is rebuilt with new creds
         vscode.workspace.onDidChangeConfiguration((e) => {
-            if (e.affectsConfiguration('KAIROS')) {
+            // BUG-FIX 2: config key must be lowercase 'kairos' to match package.json
+            if (e.affectsConfiguration('kairos')) {
                 this._orchestrator = undefined;
             }
         });
@@ -92,8 +113,44 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     public clearChat(): void {
+        this._saveCurrentSession();
         this._history = [];
+        this._sessionId = Date.now().toString();
         this._post({ type: 'clear' });
+    }
+
+    private _saveCurrentSession() {
+        if (this._history.length === 0) return;
+        
+        let sessions = this._context.workspaceState.get<ChatSession[]>('kairos_sessions') || [];
+        const existingIndex = sessions.findIndex(s => s.id === this._sessionId);
+        
+        // Use first user message as title
+        const titleMatch = this._history.find(h => h.role === 'user');
+        const contentStr = typeof titleMatch?.content === 'string' 
+            ? titleMatch.content 
+            : (Array.isArray(titleMatch?.content) && titleMatch.content[0] && 'text' in titleMatch.content[0])
+                ? (titleMatch.content[0] as { text: string }).text
+                : 'New Conversation';
+            
+        const title = contentStr.substring(0, 30) + '...';
+
+        const session: ChatSession = {
+            id: this._sessionId,
+            title,
+            updatedAt: Date.now(),
+            history: [...this._history]
+        };
+
+        if (existingIndex >= 0) {
+            sessions[existingIndex] = session;
+        } else {
+            sessions.unshift(session); // Add to front
+        }
+
+        // Keep last 20
+        sessions = sessions.slice(0, 20);
+        this._context.workspaceState.update('kairos_sessions', sessions);
     }
 
     // ── Message handling ──────────────────────────────────────────────────────
@@ -101,23 +158,89 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private async _handleMessage(message: InboundMessage): Promise<void> {
         switch (message.type) {
             case 'userMessage':
-                await this._processUserMessage(message.text, message.mode, message.model, message.reasoningLevel);
+                await this._processUserMessage(message.text, message.mode, message.model, message.reasoningLevel, message.images);
                 break;
             case 'clearChat':
                 this.clearChat();
                 break;
             case 'ready':
+                // Restore current session history so the user doesn't lose context
+                // when the webview panel is closed and reopened
+                if (this._history.length > 0) {
+                    for (const msg of this._history) {
+                        if (msg.role === 'user') {
+                            const textContent = typeof msg.content === 'string'
+                                ? msg.content
+                                : (msg.content as Array<{type:string,text?:string}>).find(p => p.type === 'text')?.text || '';
+                            this._post({ type: 'replayUser', text: textContent });
+                        } else if (msg.role === 'assistant') {
+                            const text = typeof msg.content === 'string' ? msg.content : '';
+                            this._post({ type: 'replayAssistant', text });
+                        }
+                    }
+                    this._post({ type: 'systemMessage', text: '🔄 Session restored.' });
+                }
                 break;
             case 'openSettings':
                 await vscode.commands.executeCommand(
                     'workbench.action.openSettings',
-                    'KAIROS'
+                    'kairos'
                 );
+                break;
+            case 'acceptFile':
+                const { fsTools } = require('../utils/terminal');
+                await fsTools.writeFile(message.path, message.content);
+                this._post({ type: 'systemMessage', text: `✅ File updated: ${message.path}` });
+                break;
+            case 'getHistory':
+                const sessions = this._context.workspaceState.get<ChatSession[]>('kairos_sessions') || [];
+                this._post({ type: 'historyList', sessions });
+                break;
+            case 'loadSession':
+                const allSessions = this._context.workspaceState.get<ChatSession[]>('kairos_sessions') || [];
+                const targetSession = allSessions.find(s => s.id === message.id);
+                if (targetSession) {
+                    this._saveCurrentSession();
+                    this._history = [...targetSession.history];
+                    this._sessionId = targetSession.id;
+                    this._post({ type: 'clear' });
+                    // Replay each message visually so the user can see the conversation
+                    for (const msg of targetSession.history) {
+                        if (msg.role === 'user') {
+                            const textContent = typeof msg.content === 'string'
+                                ? msg.content
+                                : (msg.content as Array<{type:string,text?:string}>).find(p => p.type === 'text')?.text || '';
+                            this._post({ type: 'replayUser', text: textContent });
+                        } else if (msg.role === 'assistant') {
+                            const text = typeof msg.content === 'string' ? msg.content : '';
+                            this._post({ type: 'replayAssistant', text });
+                        }
+                    }
+                    this._post({ type: 'systemMessage', text: `📖 Loaded: <strong>${targetSession.title}</strong> — the AI remembers this context.` });
+                }
+                break;
+            case 'openTerminal':
+                vscode.commands.executeCommand('workbench.action.terminal.toggleTerminal');
+                break;
+            case 'openChanges':
+                vscode.commands.executeCommand('workbench.view.scm');
+                break;
+            case 'reviewChanges':
+                vscode.commands.executeCommand('workbench.action.compareEditor.nextChange').then(
+                    () => {},
+                    () => vscode.commands.executeCommand('git.openAllChanges')
+                );
+                break;
+            case 'openWeb':
+                vscode.env.openExternal(vscode.Uri.parse('https://google.com'));
+                break;
+            case 'openArtifacts':
+                vscode.commands.executeCommand('workbench.view.explorer');
                 break;
         }
     }
 
-    private async _processUserMessage(text: string, mode: string, model: string, reasoningLevel: number): Promise<void> {
+    private async _processUserMessage(text: string, mode: string, model: string, reasoningLevel: number, images: string[] = []): Promise<void> {
         if (this._isStreaming) {
             this._post({
                 type: 'systemMessage',
@@ -137,14 +260,29 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             const orchestrator = this._getOrchestrator();
             const ctx = await collectWorkspaceContext();
 
-            await orchestrator.process(trimmed, ctx, this._history, {
+            let userContent: any = trimmed;
+            if (images && images.length > 0) {
+                userContent = [{ type: 'text', text: trimmed }];
+                for (const img of images) {
+                    userContent.push({ type: 'image_url', image_url: { url: img } });
+                }
+            }
+
+            let fullResponse = '';
+            await orchestrator.process(userContent, ctx, this._history, {
                 onToken: (content) => {
+                    fullResponse += content;
                     this._post({ type: 'token', content });
                 },
                 onDone: (metadata) => {
                     this._isStreaming = false;
-                    this._history.push({ role: 'user', content: trimmed });
+                    this._history.push({ role: 'user', content: userContent });
+                    this._history.push({ role: 'assistant', content: fullResponse });
+                    this._saveCurrentSession();
                     this._post({ type: 'done', metadata });
+                },
+                onFilePending: (path, content) => {
+                    this._post({ type: 'fileChange', path, content });
                 },
                 onError: (message) => {
                     this._isStreaming = false;
@@ -166,7 +304,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
     private _getOrchestrator(): AgentOrchestrator {
         if (!this._orchestrator) {
-            const config = vscode.workspace.getConfiguration('KAIROS');
+            // BUG-FIX 2: use lowercase 'kairos' to match package.json configuration key
+            const config = vscode.workspace.getConfiguration('kairos');
             const baseUrl = config.get<string>('litellmBaseUrl', 'https://kairos-litellm.onrender.com');
             const apiKey = config.get<string>('litellmApiKey', 'sk-KAIROS');
             const timeoutMs = config.get<number>('autoSelectFamilyTimeout', 30000);
@@ -189,169 +328,147 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         const nonce = getNonce();
 
         return /* html */ `<!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; script-src 'nonce-${nonce}' ${webview.cspSource} https://cdn.tailwindcss.com 'unsafe-inline'; font-src ${webview.cspSource} https://fonts.gstatic.com; img-src ${webview.cspSource} https:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; script-src 'nonce-${nonce}' ${webview.cspSource} https://cdn.tailwindcss.com 'unsafe-inline'; font-src ${webview.cspSource} https://fonts.gstatic.com; img-src ${webview.cspSource} https: data:;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script nonce="${nonce}">
-    console.log('Antigravity UI Redesign v1.3 - Loaded');
     tailwind.config = {
       darkMode: 'class',
-      theme: {
-        extend: {
-          colors: { 
-            primary: '#b8a9ff',
-            'primary-dark': '#8b5cf6',
-            surface: '#0a0d1a'
-          }
-        }
-      }
-    }
+      theme: { extend: { colors: { primary: '#b8a9ff', 'primary-dark': '#8b5cf6' } } }
+    };
   </script>
   <link rel="stylesheet" href="${cssUri}">
-  <style>
-    :root { color-scheme: dark; }
-    body {
-      background: radial-gradient(circle at top, rgba(124, 58, 237, 0.12), transparent 25%),
-                  linear-gradient(180deg, #090b14 0%, #121826 60%, #0a0d17 100%);
-    }
-    .glass-panel {
-      background: rgba(10, 13, 26, 0.85);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
-    
-    /* Hover effects for pills */
-    .selector-pill {
-      @apply flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[11px] font-medium text-slate-300 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20 hover:text-white;
-    }
-    .selector-pill.active {
-      @apply bg-primary/20 border-primary/30 text-primary;
-    }
-  </style>
+  <style>:root { color-scheme: dark; }</style>
 </head>
-<body class="h-screen overflow-hidden flex flex-col p-3 gap-3">
-  <div id="panel" class="flex flex-col flex-1 rounded-2xl overflow-hidden glass-panel">
-    <!-- Top Bar -->
-    <div id="top-bar" class="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-white/2">
-      <div id="title-group" class="flex flex-col">
-        <p class="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-0.5">Kairos Agent</p>
-        <h1 class="text-sm font-bold text-white flex items-center gap-2">
-          New Conversation
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
-        </h1>
+<body>
+<div id="app">
+  <!-- History Sidebar -->
+  <div id="history-sidebar">
+    <div class="history-header">
+      <div class="history-title">
+        <span class="material-symbols-outlined">history</span>
+        <span>History</span>
       </div>
-      <div class="flex items-center gap-2">
-        <button id="btn-clear" class="px-3 py-1.5 text-[11px] font-medium rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors">Clear</button>
-        <button id="btn-settings" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
-          <span class="material-symbols-outlined text-[18px]">tune</span>
+      <button id="btn-close-history" class="icon-btn" title="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div id="history-list-container" style="flex:1;overflow-y:auto;padding:8px;"></div>
+  </div>
+
+  <!-- Main Panel -->
+  <div id="panel">
+    <!-- Top Bar -->
+    <div id="top-bar">
+      <div style="display:flex;align-items:center;gap:2px;">
+        <button id="btn-history"  class="icon-btn" title="Chat History"><span class="material-symbols-outlined">history</span></button>
+        <button id="btn-new-chat" class="icon-btn" title="New Chat"><span class="material-symbols-outlined">add_comment</span></button>
+      </div>
+      <div class="top-bar-center">Kairos Agent</div>
+      <div style="display:flex;align-items:center;gap:2px;">
+        <button id="btn-clear"    class="icon-btn" title="Clear chat"><span class="material-symbols-outlined">delete_sweep</span></button>
+        <button id="btn-settings" class="icon-btn" title="Settings"><span class="material-symbols-outlined">tune</span></button>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div id="action-bar">
+      <div style="display:flex;align-items:center;gap:2px;">
+        <button id="btn-changes" class="action-icon-btn" title="Source Control / Changes">
+          <span class="material-symbols-outlined" style="font-size:17px;">description</span>
+          <span id="changes-badge" class="action-dot" style="background:#64748b;display:none;"></span>
+        </button>
+        <button id="btn-terminal" class="action-icon-btn" title="Toggle Terminal">
+          <span class="material-symbols-outlined" style="font-size:17px;">terminal</span>
+        </button>
+        <button id="btn-artifacts" class="action-icon-btn" title="Explorer / Artifacts">
+          <span class="material-symbols-outlined" style="font-size:17px;">layers</span>
+          <span class="action-dot" style="background:#3b82f6;"></span>
+        </button>
+        <button id="btn-web" class="action-icon-btn" title="Open Web Browser">
+          <span class="material-symbols-outlined" style="font-size:17px;">public</span>
         </button>
       </div>
+      <button id="btn-review-changes" style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text-dim);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font);letter-spacing:0.04em;text-transform:uppercase;">
+        <span class="material-symbols-outlined" style="font-size:13px;">checklist</span>
+        Review Changes
+      </button>
     </div>
 
-    <!-- Messages Area -->
-    <div id="messages" class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
-      <!-- Empty State -->
-      <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center max-w-[280px] mx-auto space-y-4">
-        <div class="w-16 h-16 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10">
-          <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
+    <!-- Messages -->
+    <div id="messages"></div>
+
+    <!-- Input Section -->
+    <div id="input-section">
+      <div class="input-container">
+        <div class="input-row">
+          <textarea id="user-input" rows="1" placeholder="Ask anything… @ to mention, / for commands"></textarea>
         </div>
-        <div class="space-y-1">
-          <h2 class="text-white font-bold">How can I help today?</h2>
-          <p class="text-[12px] text-slate-400 leading-relaxed">I can help you build, test, or debug your codebase using the latest AI models.</p>
-        </div>
-        <div class="grid grid-cols-1 gap-2 w-full pt-4">
-            <div class="p-3 rounded-xl bg-white/2 border border-white/5 text-left flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group">
-                <span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-colors">terminal</span>
-                <span class="text-[11px] text-slate-400">Explain this file structure</span>
+        <div class="input-controls-row">
+          <div class="controls-left">
+            <!-- Upload -->
+            <div class="upload-group">
+              <button id="btn-file-upload"  class="upload-btn" title="Attach file"><span class="material-symbols-outlined">note_add</span></button>
+              <div class="upload-divider"></div>
+              <button id="btn-image-upload" class="upload-btn" title="Attach image"><span class="material-symbols-outlined">image</span></button>
             </div>
-             <div class="p-3 rounded-xl bg-white/2 border border-white/5 text-left flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group">
-                <span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-colors">bug_report</span>
-                <span class="text-[11px] text-slate-400">Find security vulnerabilities</span>
-            </div>
-        </div>
-      </div>
-    </div>
+            <input type="file" id="file-input"  multiple style="display:none;">
+            <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp" style="display:none;">
 
-    <!-- Input Area -->
-    <div class="p-4 border-t border-white/5 bg-white/2">
-      <div id="input-box" class="relative flex flex-col gap-3 p-3 rounded-2xl bg-[#1a1b26]/60 border border-white/10 focus-within:border-primary/40 focus-within:bg-[#1a1b26]/80 transition-all shadow-inner">
-        <!-- Input wrapper -->
-        <textarea 
-          id="user-input" 
-          placeholder="Ask anything, @ to mention, / for workflows" 
-          rows="1" 
-          style="field-sizing: content;"
-          class="w-full bg-transparent border-none focus:ring-0 text-[13px] text-slate-200 placeholder-slate-500 resize-none min-h-[44px] max-h-[180px] py-1 custom-scrollbar"
-        ></textarea>
+            <div class="ctrl-sep"></div>
 
-        <!-- Controls Row -->
-        <div class="flex items-center justify-between gap-2 pt-1">
-          <div class="flex items-center flex-wrap gap-2 flex-1">
-            <!-- File Upload -->
-            <button id="btn-file-upload" title="Attach context" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all">
-              <span class="material-symbols-outlined text-[20px]">add_circle</span>
-            </button>
-            <input type="file" id="file-input" multiple style="display: none;" />
-
-            <div class="h-4 w-px bg-white/10 mx-1"></div>
-
-            <!-- Mode Selector -->
-            <div class="relative group">
-                <div id="mode-selector-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-bold text-indigo-400 cursor-pointer hover:bg-indigo-500/20 transition-all uppercase tracking-wider">
-                    <span class="material-symbols-outlined text-[14px]">bolt</span>
-                    <span id="mode-text">Fast</span>
-                    <span class="material-symbols-outlined text-[12px] opacity-50 transition-opacity">expand_more</span>
-                </div>
-                <!-- Mode Dropdown -->
-                <div id="mode-dropdown" class="hidden absolute bottom-full mb-2 left-0 w-48 rounded-xl bg-[#1a1b26] border border-white/10 shadow-2xl z-50 overflow-hidden">
-                    <div class="p-1" id="mode-list"></div>
-                </div>
+            <!-- Mode -->
+            <div style="position:relative;">
+              <div id="mode-selector-btn" class="selector-pill">
+                <span class="material-symbols-outlined">bolt</span>
+                <span id="mode-text">Fast</span>
+                <span class="material-symbols-outlined" style="font-size:12px;opacity:0.5;">expand_more</span>
+              </div>
+              <div id="mode-dropdown" class="dropdown-panel hidden">
+                <div class="dropdown-inner" id="mode-list"></div>
+              </div>
             </div>
 
-            <!-- Model Selector -->
-            <div class="relative group">
-                <div id="model-selector-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-slate-400 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all uppercase tracking-wider">
-                    <span class="material-symbols-outlined text-[14px]">neurology</span>
-                    <span id="model-text">Qwen 3.0</span>
-                    <span class="material-symbols-outlined text-[12px] opacity-50 transition-opacity">expand_more</span>
-                </div>
-                <!-- Model Dropdown -->
-                <div id="model-dropdown" class="hidden absolute bottom-full mb-2 left-0 w-64 rounded-xl bg-[#1a1b26] border border-white/10 shadow-2xl z-50 overflow-hidden">
-                    <div class="p-1" id="model-list"></div>
-                </div>
+            <!-- Model -->
+            <div style="position:relative;">
+              <div id="model-selector-btn" class="selector-pill">
+                <span class="material-symbols-outlined">neurology</span>
+                <span id="model-text">Qwen 3 Coder</span>
+                <span class="material-symbols-outlined" style="font-size:12px;opacity:0.5;">expand_more</span>
+              </div>
+              <div id="model-dropdown" class="dropdown-panel wide hidden">
+                <div class="dropdown-inner" id="model-list"></div>
+              </div>
             </div>
 
-             <!-- Reasoning Selector -->
-             <div id="reasoning-selector-btn" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-slate-400 cursor-pointer hover:bg-white/10 transition-all uppercase tracking-wider">
-              <span class="material-symbols-outlined text-[14px]">psychology</span>
+            <!-- Reasoning -->
+            <div id="reasoning-selector-btn" class="selector-pill hidden">
+              <span class="material-symbols-outlined">psychology</span>
               <span id="reasoning-text">Med</span>
             </div>
           </div>
 
-          <!-- Send Button (Right Most) -->
-          <div class="flex-shrink-0">
-            <button id="btn-send" title="Send (Enter)" class="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-slate-900 border-none hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(184,169,255,0.3)] disabled:opacity-50 disabled:hover:scale-100">
-               <span class="material-symbols-outlined text-[20px] font-bold">arrow_upward</span>
+          <div class="controls-right">
+            <span id="token-counter"></span>
+            <button id="btn-stop" class="hidden" title="Stop generation">
+              <span class="material-symbols-outlined" style="font-size:16px;">stop</span>
+            </button>
+            <button id="btn-send" title="Send (Enter)">
+              <span class="material-symbols-outlined">arrow_upward</span>
             </button>
           </div>
         </div>
       </div>
-      <!-- Footer Info -->
-      <div class="flex items-center justify-center gap-4 mt-3">
-        <p class="text-[9px] text-slate-600 font-medium">✨ Connected to Antigravity AI Cloud</p>
-      </div>
+      <div id="input-footer">✦ Kairos AI · Powered by LiteLLM Proxy</div>
     </div>
   </div>
 
+</div>
   <script nonce="${nonce}" src="${jsUri}"></script>
 </body>
 </html>`;

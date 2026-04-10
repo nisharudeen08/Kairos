@@ -19,12 +19,10 @@ export interface AgentMetadata {
 }
 
 export interface OrchestratorCallbacks {
-    /** Called for each streamed token */
     onToken(content: string): void;
-    /** Called once when stream is complete */
     onDone(metadata: AgentMetadata): void;
-    /** Called if an unrecoverable error occurs */
     onError(message: string): void;
+    onFilePending?: (path: string, content: string) => void;
 }
 
 /** Rough chars-per-token estimate for context budgeting */
@@ -49,7 +47,7 @@ export class AgentOrchestrator {
     }
 
     async process(
-        userMessage: string,
+        userMessage: string | any[],
         ctx: WorkspaceContext,
         history: ChatMessage[],
         callbacks: OrchestratorCallbacks,
@@ -57,8 +55,14 @@ export class AgentOrchestrator {
     ): Promise<void> {
         const { mode, model, reasoningLevel } = options;
         
+        // Extract text for classification
+        const textForClassification = typeof userMessage === 'string' 
+            ? userMessage 
+            // @ts-ignore
+            : userMessage.find((item) => item.type === 'text')?.text || '';
+
         // ── Layer 1: Classify ────────────────────────────────────────────────
-        const classification = classify(userMessage, ctx.diagnostics.length > 0);
+        const classification = classify(textForClassification, ctx.diagnostics.length > 0);
         logger.info(
             `[Orchestrator] intent=${classification.intent} ` +
             `mode=${mode} model=${model} reasoning=${reasoningLevel} ` +
@@ -94,8 +98,10 @@ export class AgentOrchestrator {
         };
 
         // ── Build messages ───────────────────────────────────────────────────
+        // BUG-FIX 3: systemPromptText was built before mode was available above — rebuild with mode
+        const systemPromptWithMode = buildSystemPrompt(this.extensionUri, ctx, mode);
         const messages: ChatMessage[] = [
-            { role: 'system', content: systemPromptText },
+            { role: 'system', content: systemPromptWithMode },
             ...history,
             { role: 'user', content: userMessage },
         ];
@@ -240,18 +246,16 @@ export class AgentOrchestrator {
         }
 
         // 3. WRITE Tags: <write path="path">content</write>
-        // Support both <write path="..."> and <write path='...'> or no quotes
         const writeRegex = /<write\s+path=["']?([^"'>\s]+)["']?[^>]*>([\s\S]*?)<\/write>/gi;
         let writeMatch;
         while ((writeMatch = writeRegex.exec(text)) !== null) {
             const filePath = writeMatch[1].trim();
             const content = writeMatch[2];
-            callbacks.onToken(`\n\n> 💾 **Writing:** \`${filePath}\`...`);
-            try {
-                await fsTools.writeFile(filePath, content);
-                callbacks.onToken(` (Success)`);
-            } catch (err) {
-                callbacks.onToken(` (Failed: ${err instanceof Error ? err.message : String(err)})`);
+            
+            // Signal the review UI instead of writing
+            callbacks.onToken(`\n\n> 📥 **Pending Change:** \`${filePath}\` (Review below)`);
+            if (callbacks.onFilePending) {
+                callbacks.onFilePending(filePath, content);
             }
         }
 
@@ -273,10 +277,18 @@ export class AgentOrchestrator {
     private estimateTokens(
         systemPrompt: string,
         history: ChatMessage[],
-        userMessage: string
+        userMessage: string | any[]
     ): number {
-        const historyChars = history.reduce((sum, m) => sum + m.content.length, 0);
-        const total = systemPrompt.length + historyChars + userMessage.length;
+        const historyChars = history.reduce((sum, m) => {
+            const len = typeof m.content === 'string'
+                ? m.content.length
+                : JSON.stringify(m.content).length;
+            return sum + len;
+        }, 0);
+        const userLen = typeof userMessage === 'string'
+            ? userMessage.length
+            : JSON.stringify(userMessage).length;
+        const total = systemPrompt.length + historyChars + userLen;
         return Math.ceil(total / CHARS_PER_TOKEN);
     }
 }

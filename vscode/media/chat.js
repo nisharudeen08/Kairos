@@ -4,245 +4,344 @@
 // @ts-ignore
 const vscode = acquireVsCodeApi();
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const modeOptions = [
-  { value: 'agent', label: 'Agent', color: 'rose' },
-  { value: 'fast', label: 'Fast', color: 'indigo' },
-  { value: 'ask', label: 'Ask', color: 'emerald' },
-  { value: 'plan', label: 'Plan', color: 'amber' },
+  { value: 'agent', label: 'Agent',  icon: 'smart_toy',    color: 'rose'    },
+  { value: 'fast',  label: 'Fast',   icon: 'bolt',         color: 'indigo'  },
+  { value: 'ask',   label: 'Ask',    icon: 'help_outline', color: 'emerald' },
+  { value: 'plan',  label: 'Plan',   icon: 'architecture', color: 'amber'   },
 ];
 
 const modelOptions = [
-  { value: 'qwen3-coder', label: 'Qwen 3 Coder' },
-  { value: 'gpt-oss-120b', label: 'GPT OSS 120B' },
-  { value: 'llama-3.3-70b', label: 'Llama 3.3 70B' },
-  { value: 'hermes-405b', label: 'Hermes 405B' },
-  { value: 'stepfun-flash', label: 'StepFun Flash' },
-  { value: 'deepseek-v3', label: 'DeepSeek V3' },
-  { value: 'deepseek-r1', label: 'DeepSeek R1' },
+  // ── Free Flagship ─────────────────────────────────────────────────────────
+  { value: 'qwen3-coder',   label: 'Qwen 2.5 Coder 32B 🆓', group: 'Free · Flagship' },
+  { value: 'hermes-405b',   label: 'Hermes 3 · 405B 🆓',     group: 'Free · Flagship' },
+  { value: 'llama-3.3-70b', label: 'Llama 3.3 70B · Groq 🆓', group: 'Free · Flagship' },
+  { value: 'gpt-oss-120b',  label: 'Hermes 405B (Alt) 🆓',   group: 'Free · Flagship' },
+  // ── Free Balanced ─────────────────────────────────────────────────────────
+  { value: 'gemma-3-27b',   label: 'Gemma 3 · 27B 🆓',       group: 'Free · Balanced' },
+  { value: 'deepseek-v3',   label: 'Qwen 2.5 · 72B 🆓',      group: 'Free · Balanced' },
+  { value: 'glm-4-5-air',   label: 'GLM 4.5 Air 🆓',         group: 'Free · Balanced' },
+  { value: 'qwen3-6-plus',  label: 'Qwen 2 · 7B 🆓',         group: 'Free · Balanced' },
+  { value: 'gpt-oss-20b',   label: 'GPT 3.5 Turbo 🆓',       group: 'Free · Balanced' },
+  // ── Free Reasoning ────────────────────────────────────────────────────────
+  { value: 'deepseek-r1',   label: 'DeepSeek R1 · Groq 🆓',  group: 'Free · Reasoning'},
+  { value: 'lfm-thinking',  label: 'LFM 32B Thinking 🆓',    group: 'Free · Reasoning'},
+  { value: 'lfm-instruct',  label: 'LFM 40B Instruct 🆓',    group: 'Free · Reasoning'},
 ];
+
+// Models that support reasoning — show reasoning toggle only for these
+const REASONING_MODELS = new Set(['deepseek-r1', 'lfm-thinking', 'lfm-instruct']);
 
 const reasoningLabels = ['Low', 'Med', 'High'];
 
-let isStreaming = false;
-let streamBuffer = '';
-/** @type {HTMLElement | null} */
-let streamTarget = null;
-/** @type {HTMLElement | null} */
-let cursorEl = null;
+// ─── State ────────────────────────────────────────────────────────────────────
 
-let currentModeIndex = 0;
-let currentModelIndex = 0;
-let currentReasoningLevel = 1;
+let isStreaming       = false;
+let streamBuffer      = '';
+/** @type {HTMLElement | null} */ let streamTarget = null;
+/** @type {HTMLElement | null} */ let cursorEl     = null;
+/** @type {AbortController | null} */ let streamAbortController = null;
 
-const messagesEl = /** @type {HTMLElement} */ (document.getElementById('messages'));
-const inputEl = /** @type {HTMLTextAreaElement} */ (document.getElementById('user-input'));
-const sendBtn = /** @type {HTMLButtonElement} */ (document.getElementById('btn-send'));
-const clearBtn = document.getElementById('btn-clear');
-const settingsBtn = document.getElementById('btn-settings');
-const modeBtn = document.getElementById('mode-selector-btn');
-const modelBtn = document.getElementById('model-selector-btn');
-const reasoningBtn = document.getElementById('reasoning-selector-btn');
-const modeTextEl = document.getElementById('mode-text');
-const modelTextEl = document.getElementById('model-text');
-const reasoningTextEl = document.getElementById('reasoning-text');
-const fileUploadBtn = document.getElementById('btn-file-upload');
-const fileInput = /** @type {HTMLInputElement} */ (document.getElementById('file-input'));
+let currentModeIndex      = 0;  // index into modeOptions
+let currentModelIndex     = 0;  // index into modelOptions
+let currentReasoningLevel = 1;  // 1 | 2 | 3
 
-// Dropdowns
-const modeDropdown = document.getElementById('mode-dropdown');
-const modelDropdown = document.getElementById('model-dropdown');
-const modeList = document.getElementById('mode-list');
-const modelList = document.getElementById('model-list');
+/** @type {string[]} */ let pendingImages = [];
 
-// Initialize
+// ─── DOM Refs ─────────────────────────────────────────────────────────────────
+
+const messagesEl          = /** @type {HTMLElement} */ (document.getElementById('messages'));
+const inputEl             = /** @type {HTMLTextAreaElement} */ (document.getElementById('user-input'));
+const sendBtn             = /** @type {HTMLButtonElement} */ (document.getElementById('btn-send'));
+const stopBtn             = /** @type {HTMLButtonElement} */ (document.getElementById('btn-stop'));
+const clearBtn            = document.getElementById('btn-clear');
+const settingsBtn         = document.getElementById('btn-settings');
+const historyBtn          = document.getElementById('btn-history');
+const newChatBtn          = document.getElementById('btn-new-chat');
+const closeHistoryBtn     = document.getElementById('btn-close-history');
+const historySidebar      = document.getElementById('history-sidebar');
+const historyListContainer= document.getElementById('history-list-container');
+const tokenCounterEl      = document.getElementById('token-counter');
+
+const modeBtn             = document.getElementById('mode-selector-btn');
+const modelBtn            = document.getElementById('model-selector-btn');
+const reasoningBtn        = document.getElementById('reasoning-selector-btn');
+const modeTextEl          = document.getElementById('mode-text');
+const modelTextEl         = document.getElementById('model-text');
+const reasoningTextEl     = document.getElementById('reasoning-text');
+
+const fileUploadBtn       = document.getElementById('btn-file-upload');
+const fileInput           = /** @type {HTMLInputElement} */ (document.getElementById('file-input'));
+const imageUploadBtn      = document.getElementById('btn-image-upload');
+const imageInput          = /** @type {HTMLInputElement} */ (document.getElementById('image-input'));
+
+// ─── Action Bar Buttons ───────────────────────────────────────────────────────
+const changesBtn          = document.getElementById('btn-changes');
+const terminalBtn         = document.getElementById('btn-terminal');
+const artifactsBtn        = document.getElementById('btn-artifacts');
+const webBtn              = document.getElementById('btn-web');
+const reviewChangesBtn    = document.getElementById('btn-review-changes');
+
+const modeDropdown        = document.getElementById('mode-dropdown');
+const modelDropdown       = document.getElementById('model-dropdown');
+const modeList            = document.getElementById('mode-list');
+const modelList           = document.getElementById('model-list');
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+buildDropdowns();
 syncControls();
-renderDropdowns();
-inputEl.focus();
+renderEmptyState();   // show prompt chips until first message arrives
+if (inputEl) inputEl.focus();
 
-// Handlers
-sendBtn.addEventListener('click', handleSend);
+// Tell the extension host we're mounted — it will replay current session history
+vscode.postMessage({ type: 'ready' });
 
-inputEl.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    event.preventDefault();
+// ─── Send / Stop ──────────────────────────────────────────────────────────────
+
+sendBtn?.addEventListener('click', handleSend);
+
+stopBtn?.addEventListener('click', () => {
+  if (streamAbortController) {
+    streamAbortController.abort();
+    streamAbortController = null;
+  }
+  handleDone(true);
+});
+
+inputEl?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
     handleSend();
   }
 });
 
-inputEl.addEventListener('input', () => {
+// Auto-grow textarea + token estimate
+inputEl?.addEventListener('input', () => {
   inputEl.style.height = 'auto';
   inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + 'px';
+  updateTokenEstimate();
 });
 
-settingsBtn?.addEventListener('click', () => {
-  vscode.postMessage({ type: 'openSettings' });
+// ─── Top-bar & controls ───────────────────────────────────────────────────────
+
+settingsBtn?.addEventListener('click', () => vscode.postMessage({ type: 'openSettings' }));
+clearBtn?.addEventListener('click',    () => vscode.postMessage({ type: 'clearChat' }));
+
+historyBtn?.addEventListener('click', () => {
+  // Use .open class — matches CSS: #history-sidebar.open { transform: translateX(0) }
+  historySidebar?.classList.add('open');
+  vscode.postMessage({ type: 'getHistory' });
+});
+closeHistoryBtn?.addEventListener('click', () => historySidebar?.classList.remove('open'));
+// Also close sidebar when clicking outside it
+document.addEventListener('click', (e) => {
+  if (historySidebar?.classList.contains('open')) {
+    if (!historySidebar.contains(/** @type {Node} */ (e.target)) &&
+        e.target !== historyBtn) {
+      historySidebar.classList.remove('open');
+    }
+  }
 });
 
-clearBtn?.addEventListener('click', () => {
+newChatBtn?.addEventListener('click', () => {
   vscode.postMessage({ type: 'clearChat' });
+  appendSystemMessage('✨ New conversation started.');
 });
 
-fileUploadBtn?.addEventListener('click', () => {
-  fileInput?.click();
+fileUploadBtn?.addEventListener('click',  () => fileInput?.click());
+imageUploadBtn?.addEventListener('click', () => imageInput?.click());
+fileInput?.addEventListener('change',  handleFileSelect);
+imageInput?.addEventListener('change', handleImageSelect);
+
+// ─── Action Bar Button Handlers ───────────────────────────────────────────────
+
+changesBtn?.addEventListener('click', () => {
+  vscode.postMessage({ type: 'openChanges' });
+  appendSystemMessage('📂 Opening Source Control panel...');
 });
 
-fileInput?.addEventListener('change', handleFileSelect);
+terminalBtn?.addEventListener('click', () => {
+  vscode.postMessage({ type: 'openTerminal' });
+  appendSystemMessage('💻 Toggling terminal...');
+});
 
-// Dropdown Toggling
+artifactsBtn?.addEventListener('click', () => {
+  vscode.postMessage({ type: 'openArtifacts' });
+  appendSystemMessage('📁 Opening Explorer...');
+});
+
+webBtn?.addEventListener('click', () => {
+  vscode.postMessage({ type: 'openWeb' });
+  appendSystemMessage('🌐 Opening browser...');
+});
+
+reviewChangesBtn?.addEventListener('click', () => {
+  vscode.postMessage({ type: 'reviewChanges' });
+  appendSystemMessage('🔍 Opening git diff / Review Changes...');
+});
+
+// ─── Dropdowns ────────────────────────────────────────────────────────────────
+
+// BUG-FIX 1: a single 'click' listener per button — no duplicates
 modeBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    modeDropdown?.classList.toggle('hidden');
-    modelDropdown?.classList.add('hidden');
+  e.stopPropagation();
+  modeDropdown?.classList.toggle('hidden');
+  modelDropdown?.classList.add('hidden');
 });
 
 modelBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    modelDropdown?.classList.toggle('hidden');
-    modeDropdown?.classList.add('hidden');
+  e.stopPropagation();
+  modelDropdown?.classList.toggle('hidden');
+  modeDropdown?.classList.add('hidden');
 });
 
-// Selection Listeners (Event Delegation)
-modeList?.addEventListener('click', (e) => {
-    const item = e.target.closest('[data-index]');
-    if (item) {
-        setMode(parseInt(item.getAttribute('data-index') || '0'));
-    }
-});
-
-modelList?.addEventListener('click', (e) => {
-    const item = e.target.closest('[data-index]');
-    if (item) {
-        setModel(parseInt(item.getAttribute('data-index') || '0'));
-    }
-});
-
-// Close outside
-document.addEventListener('click', () => {
-    modeDropdown?.classList.add('hidden');
-    modelDropdown?.classList.add('hidden');
-});
-
-// Close dropdowns on outside click
-document.addEventListener('click', () => {
-    modeDropdown?.classList.add('hidden');
-    modelDropdown?.classList.add('hidden');
-});
-
+// BUG-FIX 4: reasoning cycles through levels — also updates model hint label
 reasoningBtn?.addEventListener('click', () => {
   currentReasoningLevel = (currentReasoningLevel % 3) + 1;
   syncControls();
+  updateTokenEstimate();
 });
+
+// BUG-FIX 1 cont.: single event delegation per list — no duplicates
+modeList?.addEventListener('click', (e) => {
+  const item = /** @type {HTMLElement} */ (e.target)?.closest('[data-index]');
+  if (item) setMode(parseInt(item.getAttribute('data-index') || '0', 10));
+});
+
+modelList?.addEventListener('click', (e) => {
+  const item = /** @type {HTMLElement} */ (e.target)?.closest('[data-index]');
+  if (item) setModel(parseInt(item.getAttribute('data-index') || '0', 10));
+});
+
+// Close dropdowns on outside click — single listener
+document.addEventListener('click', () => {
+  modeDropdown?.classList.add('hidden');
+  modelDropdown?.classList.add('hidden');
+});
+
+// ─── VS Code message bus ──────────────────────────────────────────────────────
 
 window.addEventListener('message', (event) => {
   const msg = event.data;
   switch (msg.type) {
-    case 'token':
-      handleToken(msg.content);
-      break;
-    case 'done':
-      handleDone();
-      break;
-    case 'error':
-      handleError(msg.message);
-      break;
-    case 'systemMessage':
-      appendSystemMessage(msg.text);
-      break;
-    case 'clear':
-      clearMessages();
-      break;
+    case 'token':           handleToken(msg.content); break;
+    case 'done':            handleDone(false, msg.metadata); break;
+    case 'error':           handleError(msg.message); break;
+    case 'systemMessage':   appendSystemMessage(msg.text); break;
+    case 'clear':           clearMessages(); break;
+    case 'fileChange':      appendFileReview(msg.path, msg.content); break;
+    case 'historyList':     renderHistory(msg.sessions); break;
+    // Session replay — visually reconstruct past conversation
+    case 'replayUser':      replayUserMessage(msg.text); break;
+    case 'replayAssistant': replayAssistantMessage(msg.text); break;
   }
 });
 
-// Event Delegation for dropdowns
-modeList?.addEventListener('click', (e) => {
-    const item = e.target.closest('[data-index]');
-    if (item) {
-        const index = parseInt(item.getAttribute('data-index'));
-        setMode(index);
-    }
-});
+// ─── Build dropdown HTML ──────────────────────────────────────────────────────
 
-modelList?.addEventListener('click', (e) => {
-    const item = e.target.closest('[data-index]');
-    if (item) {
-        const index = parseInt(item.getAttribute('data-index'));
-        setModel(index);
-    }
-});
+function buildDropdowns() {
+  if (modeList) {
+    modeList.innerHTML = modeOptions.map((opt, i) => `
+      <div data-index="${i}"
+           class="flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
+        <span class="material-symbols-outlined text-sm text-${opt.color}-400">${opt.icon}</span>
+        <div>
+          <div class="font-semibold">${opt.label}</div>
+        </div>
+      </div>
+    `).join('');
+  }
 
-function renderDropdowns() {
-    const modeIcons = {
-        'agent': 'smart_toy',
-        'fast': 'bolt',
-        'ask': 'help_outline',
-        'plan': 'architecture'
-    };
-
-    if (modeList) {
-        modeList.innerHTML = modeOptions.map((opt, i) => `
-            <div data-index="${i}" class="flex items-center gap-2 p-2 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
-                <span class="material-symbols-outlined text-sm ${opt.color ? 'text-' + opt.color + '-400' : ''}">${modeIcons[opt.value] || 'bolt'}</span>
-                ${opt.label}
-            </div>
-        `).join('');
-    }
-    if (modelList) {
-        modelList.innerHTML = modelOptions.map((opt, i) => `
-            <div data-index="${i}" class="flex items-center gap-2 p-2 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
-                <span class="material-symbols-outlined text-sm text-slate-500">neurology</span>
-                ${opt.label}
-            </div>
-        `).join('');
-    }
+  if (modelList) {
+    // Group models
+    const groups = [...new Set(modelOptions.map(m => m.group))];
+    modelList.innerHTML = groups.map(group => {
+      const items = modelOptions
+        .map((opt, i) => ({ opt, i }))
+        .filter(({ opt }) => opt.group === group);
+      return `
+        <div class="px-2 pt-2 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-slate-600">${group}</div>
+        ${items.map(({ opt, i }) => `
+          <div data-index="${i}"
+               class="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
+            <span class="material-symbols-outlined text-sm text-slate-500">neurology</span>
+            ${opt.label}
+          </div>
+        `).join('')}
+      `;
+    }).join('');
+  }
 }
 
+// ─── Selector state ───────────────────────────────────────────────────────────
+
 function setMode(index) {
-    currentModeIndex = index;
-    syncControls();
-    modeDropdown?.classList.add('hidden');
+  currentModeIndex = index;
+  syncControls();
+  modeDropdown?.classList.add('hidden');
 }
 
 function setModel(index) {
-    currentModelIndex = index;
-    syncControls();
-    modelDropdown?.classList.add('hidden');
+  currentModelIndex = index;
+  syncControls();
+  modelDropdown?.classList.add('hidden');
 }
 
 function syncControls() {
-  const mode = modeOptions[currentModeIndex];
+  const mode  = modeOptions[currentModeIndex];
   const model = modelOptions[currentModelIndex];
-  
-  if (modeTextEl) modeTextEl.textContent = mode.label;
-  if (modelTextEl) modelTextEl.textContent = model.label;
+
+  if (modeTextEl)      modeTextEl.textContent  = mode.label;
+  if (modelTextEl)     modelTextEl.textContent  = model.label;
   if (reasoningTextEl) reasoningTextEl.textContent = reasoningLabels[currentReasoningLevel - 1];
 
-  const modeIcons = {
-    'agent': 'smart_toy',
-    'fast': 'bolt',
-    'ask': 'help_outline',
-    'plan': 'architecture'
+  // Update mode button color
+  const colorMap = {
+    rose:    'bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20',
+    emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20',
+    amber:   'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20',
+    indigo:  'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20',
   };
-
-  // Update mode button colors and icon dynamically
   if (modeBtn) {
     const iconEl = modeBtn.querySelector('.material-symbols-outlined');
-    if (iconEl) iconEl.textContent = modeIcons[mode.value] || 'bolt';
-
-    modeBtn.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all uppercase tracking-wider border `;
-    
-    let colorClass = '';
-    switch (mode.color) {
-        case 'emerald': colorClass = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'; break;
-        case 'amber': colorClass = 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20'; break;
-        case 'rose': colorClass = 'bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20'; break;
-        default: colorClass = 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20';
-    }
-    modeBtn.className += colorClass;
+    if (iconEl) iconEl.textContent = mode.icon;
+    modeBtn.className =
+      `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer ` +
+      `transition-all uppercase tracking-wider border ${colorMap[mode.color] || colorMap.indigo}`;
   }
+
+  // BUG-FIX 4: show/hide reasoning button based on selected model
+  const showReasoning = REASONING_MODELS.has(model.value) || currentReasoningLevel > 1;
+  if (reasoningBtn) {
+    reasoningBtn.classList.toggle('hidden', !showReasoning);
+    // Highlight reasoning button at level 3
+    reasoningBtn.classList.toggle('text-amber-400', currentReasoningLevel === 3);
+    reasoningBtn.classList.toggle('border-amber-500/30', currentReasoningLevel === 3);
+  }
+
+  // Highlight active model in dropdown
+  const modelItems = modelList?.querySelectorAll('[data-index]');
+  modelItems?.forEach((el, i) => {
+    el.classList.toggle('bg-white/5', i === currentModelIndex);
+    el.classList.toggle('text-primary', i === currentModelIndex);
+  });
 }
 
+// ─── Token estimate ───────────────────────────────────────────────────────────
+
+function updateTokenEstimate() {
+  if (!tokenCounterEl || !inputEl) return;
+  const approxTokens = Math.ceil(inputEl.value.length / 4);
+  tokenCounterEl.textContent = approxTokens > 0 ? `~${approxTokens} tokens` : '';
+}
+
+// ─── Sending ──────────────────────────────────────────────────────────────────
+
 function handleSend() {
+  if (!inputEl) return;
   const text = inputEl.value.trim();
   if (!text || isStreaming) return;
 
@@ -251,28 +350,39 @@ function handleSend() {
 
   inputEl.value = '';
   inputEl.style.height = 'auto';
+  if (tokenCounterEl) tokenCounterEl.textContent = '';
 
+  streamAbortController = new AbortController();
   beginStream();
+
   vscode.postMessage({
     type: 'userMessage',
     text,
-    mode: modeOptions[currentModeIndex].value,
-    model: modelOptions[currentModelIndex].value,
+    mode:           modeOptions[currentModeIndex].value,
+    model:          modelOptions[currentModelIndex].value,
     reasoningLevel: currentReasoningLevel,
+    images:         pendingImages,
   });
+
+  pendingImages = [];
 }
 
+// ─── Stream lifecycle ─────────────────────────────────────────────────────────
+
 function beginStream() {
-  isStreaming = true;
+  isStreaming  = true;
   streamBuffer = '';
-  sendBtn.disabled = true;
-  
+
+  if (sendBtn) sendBtn.disabled = true;
+  stopBtn?.classList.remove('hidden');
+
   const wrapper = createEl('div', 'flex flex-col items-start w-full gap-2 animation-slide-up');
-  const bubble = createEl('div', 'p-4 rounded-2xl bg-white/5 border border-white/10 text-[13px] text-slate-200 leading-relaxed max-w-[90%]');
-  const content = createEl('div', 'prose prose-invert max-w-none');
+  const bubble  = createEl('div', 'stream-bubble p-4 rounded-2xl bg-white/5 border border-white/10 text-[13px] text-slate-200 leading-relaxed w-full relative group');
+  const content = createEl('div', 'prose-content');
   content.id = 'stream-content';
 
-  cursorEl = createEl('span', 'inline-block w-1.5 h-4 bg-primary ml-1 rounded-sm animate-pulse');
+  // Blinking cursor
+  cursorEl = createEl('span', 'stream-cursor');
   content.appendChild(cursorEl);
 
   bubble.appendChild(content);
@@ -294,9 +404,9 @@ function handleToken(content) {
     streamTarget.removeChild(cursorEl);
   }
 
-  // Very basic markdown rendering for tokens to keep it fast
   streamTarget.innerHTML = renderMarkdown(streamBuffer);
-  
+
+  // Re-attach cursor at end
   if (cursorEl) {
     streamTarget.appendChild(cursorEl);
   }
@@ -304,24 +414,47 @@ function handleToken(content) {
   scrollToBottom();
 }
 
-function handleDone() {
+/**
+ * @param {boolean} aborted
+ * @param {any} [metadata]
+ */
+function handleDone(aborted = false, metadata = null) {
   isStreaming = false;
-  sendBtn.disabled = false;
+  streamAbortController = null;
+
+  if (sendBtn) sendBtn.disabled = false;
+  stopBtn?.classList.add('hidden');
 
   if (cursorEl && streamTarget?.contains(cursorEl)) {
     streamTarget.removeChild(cursorEl);
   }
-
   cursorEl = null;
+
   if (streamTarget) {
     streamTarget.innerHTML = renderMarkdown(streamBuffer);
+    // Attach copy buttons to code blocks
+    attachCodeCopyButtons(streamTarget);
+  }
+
+  // Add copy-message button to the bubble
+  const streamMsg = document.getElementById('stream-message');
+  if (streamMsg) {
+    const bubble = streamMsg.querySelector('.stream-bubble');
+    if (bubble) {
+      const copyBtn = createCopyMessageButton(streamBuffer);
+      bubble.appendChild(copyBtn);
+    }
+    streamMsg.id = '';
+  }
+
+  if (aborted) {
+    appendSystemMessage('⏹️ Generation stopped.');
+  } else if (metadata) {
+    appendAgentMeta(metadata);
   }
 
   streamBuffer = '';
   streamTarget = null;
-
-  const msgEl = document.getElementById('stream-message');
-  if (msgEl) msgEl.id = '';
 
   scrollToBottom();
 }
@@ -329,26 +462,49 @@ function handleDone() {
 /** @param {string} message */
 function handleError(message) {
   isStreaming = false;
-  sendBtn.disabled = false;
+  streamAbortController = null;
+
+  if (sendBtn) sendBtn.disabled = false;
+  stopBtn?.classList.add('hidden');
 
   document.getElementById('stream-message')?.remove();
   streamTarget = null;
-  cursorEl = null;
+  cursorEl     = null;
 
   const wrapper = createEl('div', 'flex flex-col items-start w-full gap-2');
-  const bubble = createEl('div', 'p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-[12px] text-red-400');
-  bubble.innerHTML = `<div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-sm">error</span><strong>Error</strong></div>${escapeHtml(message)}`;
+  const bubble  = createEl('div', 'p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-[12px] text-red-400 w-full');
+  bubble.innerHTML =
+    `<div class="flex items-center gap-2 mb-1 font-bold">` +
+    `<span class="material-symbols-outlined text-sm">error</span>Error</div>` +
+    `<div class="text-red-300/80 text-[11px]">${escapeHtml(message)}</div>`;
   wrapper.appendChild(bubble);
   messagesEl.appendChild(wrapper);
   scrollToBottom();
 }
 
+// ─── Message renderers ────────────────────────────────────────────────────────
+
 /** @param {string} text */
 function appendUserMessage(text) {
-  const wrapper = createEl('div', 'flex flex-col items-end w-full gap-2 animation-slide-up');
-  const bubble = createEl('div', 'px-5 py-3 rounded-2xl bg-primary text-slate-900 text-[13px] font-medium shadow-lg shadow-primary/10 max-w-[85%]');
+  const wrapper = createEl('div', 'flex flex-col items-end w-full gap-1 animation-slide-up');
+  const bubble  = createEl('div',
+    'px-4 py-3 rounded-2xl bg-primary text-slate-900 text-[13px] font-medium ' +
+    'shadow-lg shadow-primary/10 max-w-[85%] break-words');
   bubble.textContent = text;
   wrapper.appendChild(bubble);
+
+  // Render pending image previews
+  if (pendingImages.length > 0) {
+    const previews = createEl('div', 'flex flex-wrap gap-1 mt-1');
+    pendingImages.forEach(src => {
+      const img = /** @type {HTMLImageElement} */ (document.createElement('img'));
+      img.src = src;
+      img.className = 'w-16 h-16 object-cover rounded-lg border border-white/10';
+      previews.appendChild(img);
+    });
+    wrapper.appendChild(previews);
+  }
+
   messagesEl.appendChild(wrapper);
   scrollToBottom();
 }
@@ -356,13 +512,261 @@ function appendUserMessage(text) {
 /** @param {string} text */
 function appendSystemMessage(text) {
   removeEmptyState();
-  const wrapper = createEl('div', 'flex justify-center w-full py-2');
-  const pill = createEl('div', 'px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] text-slate-400');
+  const wrapper = createEl('div', 'flex justify-center w-full py-1');
+  const pill    = createEl('div',
+    'px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-slate-500');
   pill.innerHTML = text;
   wrapper.appendChild(pill);
   messagesEl.appendChild(wrapper);
   scrollToBottom();
 }
+
+// ─── Session Replay Renderers ─────────────────────────────────────────────────
+
+/**
+ * Renders a past user message during session replay.
+ * Slightly dimmed to distinguish replayed messages from the live conversation.
+ * @param {string} text
+ */
+function replayUserMessage(text) {
+  if (!text) return;
+  removeEmptyState();
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;width:100%;gap:4px;opacity:0.82;';
+
+  const bubble = document.createElement('div');
+  bubble.style.cssText =
+    'background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;' +
+    'padding:10px 16px;border-radius:16px 4px 16px 16px;' +
+    'font-size:13px;max-width:85%;word-break:break-word;line-height:1.6;';
+  bubble.textContent = text;
+
+  wrapper.appendChild(bubble);
+  messagesEl.appendChild(wrapper);
+  scrollToBottom();
+}
+
+/**
+ * Renders a past assistant message during session replay.
+ * @param {string} text
+ */
+function replayAssistantMessage(text) {
+  if (!text) return;
+  removeEmptyState();
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;width:100%;gap:4px;opacity:0.82;';
+
+  const bubble = document.createElement('div');
+  bubble.style.cssText =
+    'background:rgba(26,28,46,0.7);border:1px solid rgba(255,255,255,0.07);' +
+    'border-radius:4px 16px 16px 16px;padding:14px 16px;width:100%;position:relative;';
+
+  const content = document.createElement('div');
+  content.style.cssText = 'font-size:13px;line-height:1.75;color:var(--text);';
+  content.innerHTML = renderMarkdown(text);
+  attachCodeCopyButtons(content);
+
+  const copyBtn = createCopyMessageButton(text);
+  bubble.appendChild(content);
+  bubble.appendChild(copyBtn);
+  wrapper.appendChild(bubble);
+  messagesEl.appendChild(wrapper);
+  scrollToBottom();
+}
+
+// ─── Agent metadata pill ──────────────────────────────────────────────────────
+
+/** @param {any} meta */
+function appendAgentMeta(meta) {
+  if (!meta) return;
+  const agentColors = { Planner: 'indigo', Coder: 'emerald', Debugger: 'rose' };
+  const color = agentColors[meta.agent] || 'slate';
+  const confColors = { HIGH: 'emerald', MEDIUM: 'amber', LOW: 'rose' };
+  const confColor = confColors[meta.confidence] || 'slate';
+
+  const pill = createEl('div',
+    `flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/3 border border-white/5 ` +
+    `text-[10px] text-slate-500 w-fit`);
+  pill.innerHTML =
+    `<span class="text-${color}-400 font-bold uppercase">${meta.agent}</span>` +
+    `<span class="text-slate-600">·</span>` +
+    `<span class="font-mono">${escapeHtml(meta.modelLabel || '')}</span>` +
+    `<span class="text-slate-600">·</span>` +
+    `<span class="text-${confColor}-400">${meta.confidence}</span>`;
+
+  const wrapper = createEl('div', 'flex justify-start w-full pl-1 pb-1');
+  wrapper.appendChild(pill);
+  messagesEl.appendChild(wrapper);
+}
+
+
+// ─── Copy helpers ─────────────────────────────────────────────────────────────
+
+/** @param {string} rawMarkdown */
+function createCopyMessageButton(rawMarkdown) {
+  const btn = createEl('button',
+    'copy-msg-btn absolute top-2 right-2 p-1.5 rounded-lg bg-white/0 hover:bg-white/10 ' +
+    'text-slate-600 hover:text-slate-300 transition-all opacity-0 group-hover:opacity-100');
+  btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">content_copy</span>';
+  btn.title = 'Copy message';
+  btn.addEventListener('click', () => {
+    navigator.clipboard?.writeText(rawMarkdown).then(() => {
+      btn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-emerald-400">check</span>';
+      setTimeout(() => {
+        btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">content_copy</span>';
+      }, 1800);
+    });
+  });
+  return btn;
+}
+
+/** @param {HTMLElement} container */
+function attachCodeCopyButtons(container) {
+  container.querySelectorAll('.code-block-wrapper').forEach((wrapper) => {
+    if (wrapper.querySelector('.code-copy-btn')) return; // Already attached
+    const pre = wrapper.querySelector('pre');
+    if (!pre) return;
+
+    const btn = createEl('button',
+      'code-copy-btn absolute top-2 right-2 px-2 py-1 rounded-md text-[10px] font-bold ' +
+      'bg-white/10 hover:bg-white/20 text-slate-400 hover:text-white transition-all flex items-center gap-1');
+    btn.innerHTML = '<span class="material-symbols-outlined text-[12px]">content_copy</span> Copy';
+    btn.addEventListener('click', () => {
+      const code = pre.querySelector('code');
+      navigator.clipboard?.writeText(code?.textContent || '').then(() => {
+        btn.innerHTML = '<span class="material-symbols-outlined text-[12px] text-emerald-400">check</span> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = '<span class="material-symbols-outlined text-[12px]">content_copy</span> Copy';
+        }, 1800);
+      });
+    });
+    /** @type {HTMLElement} */ (wrapper).style.position = 'relative';
+    wrapper.appendChild(btn);
+  });
+}
+
+// ─── Markdown renderer ────────────────────────────────────────────────────────
+
+/** @param {string} text */
+function renderMarkdown(text) {
+  // Step 1: Extract and protect fenced code blocks
+  const codeBlocks = [];
+  let safe = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const langLabel = lang || 'text';
+    const idx = codeBlocks.length;
+    codeBlocks.push({ lang: langLabel, code: code.trim() });
+    return `%%CODE_BLOCK_${idx}%%`;
+  });
+
+  // Step 2: Escape HTML in the non-code parts
+  safe = escapeHtml(safe);
+
+  // Step 3: Process inline markdown
+  // KAIROS cognitive headers — strip them from the response body.
+  // The bottom metadata pill already shows accurate Agent / Model / Confidence.
+  safe = safe.replace(/🧠 Agent:.*?(\n|$)/g, '');
+  safe = safe.replace(/⚙️\s*Model:.*?(\n|$)/g, '');
+  safe = safe.replace(/🔒 Confidence:.*?(\n|$)/g, '');
+  safe = safe.replace(/📋 Plan \/ Solution:/g,
+    '<div class="kairos-plan-divider">📋 Plan / Solution</div>');
+
+  // Headers
+  safe = safe.replace(/^### (.+)$/gm, '<h3 class="md-h3">$1</h3>');
+  safe = safe.replace(/^## (.+)$/gm,  '<h2 class="md-h2">$1</h2>');
+  safe = safe.replace(/^# (.+)$/gm,   '<h1 class="md-h1">$1</h1>');
+
+  // Bold / italic
+  safe = safe.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  safe = safe.replace(/\*\*(.+?)\*\*/g,     '<strong class="md-strong">$1</strong>');
+  safe = safe.replace(/\*(.+?)\*/g,         '<em class="md-em">$1</em>');
+
+  // Inline code  (after escaping, backticks are still literal)
+  safe = safe.replace(/`([^`\n]+)`/g,
+    '<code class="md-inline-code">$1</code>');
+
+  // Blockquote
+  safe = safe.replace(/^&gt; (.+)$/gm, '<blockquote class="md-blockquote">$1</blockquote>');
+
+  // Lists
+  safe = safe.replace(/^[\-\*\•] (.+)$/gm, '<li class="md-li">$1</li>');
+  safe = safe.replace(/^(\d+)\. (.+)$/gm,  '<li class="md-li-ordered"><span class="li-num">$1.</span>$2</li>');
+
+  // HR
+  safe = safe.replace(/^---+$/gm, '<hr class="md-hr">');
+
+  // Links
+  safe = safe.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+
+  // Bold risk/warning lines
+  safe = safe.replace(
+    /^⚠\s*(.+)$/gm,
+    '<div class="md-warning">⚠️ $1</div>'
+  );
+
+  // Paragraphs — double newlines
+  safe = safe.replace(/\n{2,}/g, '</p><p class="md-p">');
+  safe = safe.replace(/\n/g,     '<br>');
+  safe = `<p class="md-p">${safe}</p>`;
+
+  // Step 4: Restore code blocks with syntax highlighting + copy btn
+  safe = safe.replace(/%%CODE_BLOCK_(\d+)%%/g, (_, idx) => {
+    const { lang, code } = codeBlocks[parseInt(idx, 10)];
+    const highlighted = syntaxHighlight(escapeHtml(code), lang);
+    return `
+      <div class="code-block-wrapper">
+        <div class="code-block-header">
+          <span class="code-lang">${escapeHtml(lang)}</span>
+        </div>
+        <pre><code class="code-block-code">${highlighted}</code></pre>
+      </div>`;
+  });
+
+  return safe;
+}
+
+// ─── Syntax highlighter ───────────────────────────────────────────────────────
+
+/**
+ * Very lightweight regex-based syntax highlight.
+ * @param {string} escapedCode — already HTML-escaped
+ * @param {string} lang
+ */
+function syntaxHighlight(escapedCode, lang) {
+  if (!['js','javascript','ts','typescript','python','py','bash','sh','json','css','html','go','rust','java', 'kotlin'].includes(lang)) {
+    return escapedCode;
+  }
+
+  let code = escapedCode;
+
+  // Strings
+  code = code.replace(/(&#39;.*?&#39;|&quot;.*?&quot;|`[^`]*`)/g,
+    '<span class="tok-string">$1</span>');
+
+  // Comments
+  code = code.replace(/(\/\/.*?$|#.*?$)/gm,
+    '<span class="tok-comment">$1</span>');
+
+  // Numbers
+  code = code.replace(/\b(\d+\.?\d*)\b/g,
+    '<span class="tok-number">$1</span>');
+
+  // Keywords (JS/TS/Go/Kotlin)
+  const kwRe = /\b(const|let|var|function|return|if|else|for|while|class|extends|import|export|from|async|await|new|typeof|instanceof|null|undefined|true|false|void|interface|type|enum|implements|package|func|def|pass|in|not|and|or|is|lambda|yield|with|as|try|catch|finally|throw|switch|case|break|continue|default|static|public|private|protected|abstract|readonly|override|constructor|super|this|val|fun|object|data|sealed|companion|when)\b/g;
+  code = code.replace(kwRe, '<span class="tok-keyword">$1</span>');
+
+  // Function calls
+  code = code.replace(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*(?=\()/g,
+    '<span class="tok-fn">$1</span>');
+
+  return code;
+}
+
+// ─── Messages state ───────────────────────────────────────────────────────────
 
 function clearMessages() {
   messagesEl.innerHTML = '';
@@ -370,29 +774,46 @@ function clearMessages() {
 }
 
 function renderEmptyState() {
-   // Already in HTML, handled by showing/hiding if needed or just letting it be if messages are empty.
-   // But we re-add it if all messages are cleared.
-    messagesEl.innerHTML = `
-      <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center max-w-[280px] mx-auto space-y-4">
-        <div class="w-16 h-16 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10">
+  const hints = [
+    { icon: 'terminal',    text: 'Explain my current file structure' },
+    { icon: 'bug_report',  text: 'Find bugs in the selected code'    },
+    { icon: 'auto_fix_high', text: 'Refactor this function'           },
+    { icon: 'science',     text: 'Write tests for this module'        },
+  ];
+
+  messagesEl.innerHTML = `
+    <div id="empty-state"
+         class="h-full flex flex-col items-center justify-center text-center max-w-[280px] mx-auto space-y-5 py-8">
+      <div class="relative">
+        <div class="w-16 h-16 rounded-3xl bg-primary/10 border border-primary/20 flex items-center
+                    justify-center text-primary shadow-2xl shadow-primary/20 animate-pulse-slow">
           <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
         </div>
-        <div class="space-y-1">
-          <h2 class="text-white font-bold">How can I help today?</h2>
-          <p class="text-[12px] text-slate-400 leading-relaxed">I can help you build, test, or debug your codebase using the latest AI models.</p>
-        </div>
-        <div class="grid grid-cols-1 gap-2 w-full pt-4">
-            <div class="p-3 rounded-xl bg-white/2 border border-white/5 text-left flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group">
-                <span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-colors">terminal</span>
-                <span class="text-[11px] text-slate-400">Explain this file structure</span>
-            </div>
-             <div class="p-3 rounded-xl bg-white/2 border border-white/5 text-left flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group">
-                <span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-colors">bug_report</span>
-                <span class="text-[11px] text-slate-400">Find security vulnerabilities</span>
-            </div>
+        <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500
+                    border-2 border-[#090b14] flex items-center justify-center">
+          <span class="material-symbols-outlined text-[10px] text-white">check</span>
         </div>
       </div>
-    `;
+      <div class="space-y-1">
+        <h2 class="text-white font-bold text-[15px]">How can I help today?</h2>
+        <p class="text-[11px] text-slate-500 leading-relaxed">
+          I'm your Kairos AI agent — I can build, test, debug, and refactor using the latest open-source models.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 w-full">
+        ${hints.map(h => `
+          <button class="hint-chip group flex items-center gap-3 p-2.5 rounded-xl
+                         bg-white/3 border border-white/5 text-left
+                         hover:bg-white/6 hover:border-primary/20 transition-all"
+                  onclick="fillInput(${JSON.stringify(h.text)})">
+            <span class="material-symbols-outlined text-sm text-slate-600
+                         group-hover:text-primary transition-colors">${h.icon}</span>
+            <span class="text-[11px] text-slate-400 group-hover:text-slate-200">${h.text}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
 function removeEmptyState() {
@@ -400,57 +821,178 @@ function removeEmptyState() {
 }
 
 /** @param {string} text */
-function renderMarkdown(text) {
-  let html = escapeHtml(text);
-
-  // Fenced code blocks
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    return `<div class="my-4 rounded-xl overflow-hidden bg-slate-900 border border-white/10">
-      <div class="px-4 py-1.5 bg-white/5 border-b border-white/5 flex items-center justify-between">
-        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">${lang || 'code'}</span>
-      </div>
-      <pre class="p-4 overflow-x-auto text-[12px] font-mono leading-relaxed text-slate-300"><code>${escapeHtml(code.trim())}</code></pre>
-    </div>`;
-  });
-
-  // Inline code
-  html = html.replace(/`([^`\n]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-white/10 text-primary-light font-mono text-[0.9em]">$1</code>');
-  
-  // Headers
-  html = html.replace(/^### (.+)$/gm, '<h3 class="text-white font-bold text-base mt-4 mb-2">$1</h3>');
-  html = html.replace(/^## (.+)$/gm, '<h2 class="text-white font-bold text-lg mt-6 mb-3 border-b border-white/5 pb-1">$1</h2>');
-  html = html.replace(/^# (.+)$/gm, '<h1 class="text-white font-bold text-xl mt-8 mb-4">$1</h1>');
-  
-  // Bold/Italic
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
-  html = html.replace(/\*(.+?)\*/g, '<em class="text-slate-400">$1</em>');
-  
-  // Lists
-  html = html.replace(/^[\-\*] (.+)$/gm, '<li class="ml-4 list-disc text-slate-300">$1</li>');
-  
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank">$1</a>');
-  
-  // Paragraphs
-  html = html.replace(/\n{2,}/g, '</p><p class="mb-3">');
-  html = html.replace(/\n/g, '<br>');
-
-  return `<p class="mb-3">${html}</p>`;
+function fillInput(text) {
+  if (!inputEl) return;
+  removeEmptyState();
+  inputEl.value = text;
+  inputEl.focus();
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + 'px';
+  updateTokenEstimate();
 }
+
+// ─── File review ──────────────────────────────────────────────────────────────
+
+/**
+ * @param {string} path
+ * @param {string} content
+ */
+function appendFileReview(path, content) {
+  removeEmptyState();
+  const wrapper   = createEl('div', 'flex flex-col items-start w-full gap-3 my-2 animation-slide-up');
+  const container = createEl('div', 'w-full rounded-2xl bg-white/5 border border-white/10 overflow-hidden shadow-xl');
+
+  const header = createEl('div', 'px-4 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between');
+  header.innerHTML = `
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-[18px]">edit_document</span>
+      <span class="text-[12px] font-bold text-white tracking-tight">${escapeHtml(path)}</span>
+    </div>
+    <span class="pending-badge text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold uppercase">Pending Review</span>
+  `;
+
+  const lines = content.split('\n');
+  const displayCode = lines.length > 60
+    ? lines.slice(0, 60).join('\n') + '\n\n... (truncated — full content will be written)'
+    : content;
+
+  const preview = createEl('div', 'p-4 bg-slate-900/80 overflow-x-auto max-h-[200px] border-b border-white/5');
+  preview.innerHTML = `<pre class="text-[11px] font-mono text-slate-400 leading-relaxed"><code>${escapeHtml(displayCode)}</code></pre>`;
+
+  const actions  = createEl('div', 'px-4 py-3 flex gap-2');
+  const acceptBtn = createEl('button',
+    'flex-1 py-2 rounded-xl bg-primary text-slate-900 text-[11px] font-bold hover:opacity-90 ' +
+    'transition-all flex items-center justify-center gap-1.5');
+  acceptBtn.innerHTML = '<span class="material-symbols-outlined text-[15px]">check</span> Accept & Write';
+
+  const declineBtn = createEl('button',
+    'flex-1 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-[11px] ' +
+    'font-bold hover:bg-white/10 transition-all flex items-center justify-center gap-1.5');
+  declineBtn.innerHTML = '<span class="material-symbols-outlined text-[15px]">close</span> Decline';
+
+  acceptBtn.onclick = () => {
+    vscode.postMessage({ type: 'acceptFile', path, content });
+    container.classList.add('opacity-50', 'pointer-events-none');
+    const badge = header.querySelector('.pending-badge');
+    if (badge) {
+      badge.textContent = '✓ Applied';
+      badge.className = 'pending-badge text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold uppercase';
+    }
+  };
+
+  declineBtn.onclick = () => {
+    container.remove();
+    appendSystemMessage(`❌ Change declined: ${escapeHtml(path)}`);
+  };
+
+  actions.appendChild(declineBtn);
+  actions.appendChild(acceptBtn);
+  container.appendChild(header);
+  container.appendChild(preview);
+  container.appendChild(actions);
+  wrapper.appendChild(container);
+  messagesEl.appendChild(wrapper);
+  scrollToBottom();
+}
+
+// ─── History ──────────────────────────────────────────────────────────────────
+
+/** @param {Array<{id:string,title:string,updatedAt:number}>} sessions */
+function renderHistory(sessions) {
+  if (!historyListContainer) return;
+
+  if (!sessions || sessions.length === 0) {
+    historyListContainer.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                  padding-top:60px;gap:8px;color:var(--text-faint);text-align:center;">
+        <span class="material-symbols-outlined" style="font-size:32px;opacity:0.3;">history_toggle_off</span>
+        <span style="font-size:11px;">No conversations yet</span>
+        <span style="font-size:10px;max-width:180px;line-height:1.5;opacity:0.7;">
+          Complete a conversation to see it here.
+        </span>
+      </div>`;
+    return;
+  }
+
+  historyListContainer.innerHTML = sessions.map(s => {
+    const d    = new Date(s.updatedAt);
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const day  = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    return `
+      <div data-session-id="${escapeHtml(s.id)}"
+           style="padding:10px 12px;border-radius:10px;cursor:pointer;transition:background 0.15s;
+                  border:1px solid transparent;margin-bottom:2px;"
+           onmouseover="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.07)';"
+           onmouseout="this.style.background='';this.style.borderColor='transparent';">
+        <div style="font-size:12px;color:var(--text-dim);font-weight:500;white-space:nowrap;
+                    overflow:hidden;text-overflow:ellipsis;max-width:220px;">
+          ${escapeHtml(s.title)}
+        </div>
+        <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${day} · ${time}</div>
+      </div>`;
+  }).join('');
+
+  historyListContainer.querySelectorAll('[data-session-id]').forEach(item => {
+    item.addEventListener('click', () => {
+      vscode.postMessage({ type: 'loadSession', id: item.getAttribute('data-session-id') });
+      // Fix: use .open class (matches CSS) instead of Tailwind -translate-x-full
+      historySidebar?.classList.remove('open');
+    });
+  });
+}
+
+// ─── File / image upload ──────────────────────────────────────────────────────
+
+/** @param {Event} event */
+function handleFileSelect(event) {
+  const target = /** @type {HTMLInputElement} */ (event.target);
+  if (target.files && target.files.length > 0) {
+    const names = Array.from(target.files).map(f => f.name).join(', ');
+    appendSystemMessage(
+      `<span class="flex items-center gap-1.5">` +
+      `<span class="material-symbols-outlined text-[13px]">attach_file</span>` +
+      `${target.files.length} file(s): ${escapeHtml(names)}</span>`
+    );
+    target.value = '';
+  }
+}
+
+/** @param {Event} event */
+function handleImageSelect(event) {
+  const target = /** @type {HTMLInputElement} */ (event.target);
+  if (target.files && target.files.length > 0) {
+    const names = Array.from(target.files).map(f => f.name).join(', ');
+    appendSystemMessage(
+      `<span class="flex items-center gap-1.5">` +
+      `<span class="material-symbols-outlined text-[13px] text-blue-400">image</span>` +
+      `${target.files.length} image(s) attached: ${escapeHtml(names)}</span>`
+    );
+    for (const file of Array.from(target.files)) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) pendingImages.push(e.target.result.toString());
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
 
 /** @param {unknown} str */
 function escapeHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&#39;');
 }
 
 /**
  * @param {string} tag
- * @param {string} className
+ * @param {string} [className]
+ * @returns {HTMLElement}
  */
 function createEl(tag, className) {
   const el = document.createElement(tag);
@@ -459,16 +1001,5 @@ function createEl(tag, className) {
 }
 
 function scrollToBottom() {
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-/** @param {Event} event */
-function handleFileSelect(event) {
-  const target = /** @type {HTMLInputElement} */ (event.target);
-  const files = target.files;
-  if (files && files.length > 0) {
-    const fileNames = Array.from(files).map(f => f.name).join(', ');
-    appendSystemMessage(`<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">attach_file</span> ${files.length} file(s) selected: ${fileNames}</span>`);
-    target.value = '';
-  }
+  if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
 }
