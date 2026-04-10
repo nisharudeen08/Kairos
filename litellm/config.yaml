@@ -9,21 +9,21 @@ model_list:
 
   - model_name: gpt-oss-120b
     litellm_params:
-      model: openrouter/openai/gpt-oss-120b:free
+      model: openrouter/paragon-ai/paragon-120b-8k
       api_key: os.environ/OPENROUTER_API_KEY_1
-      api_base: https://openrouter.ai/api/v1
+      fallbacks: [gpt-oss-20b, qwen3-coder]
 
   - model_name: qwen3-coder
     litellm_params:
-      model: openrouter/qwen/qwen3-coder:free
+      model: openrouter/qwen/qwen-2.5-coder-32b-instruct
       api_key: os.environ/OPENROUTER_API_KEY_1
-      api_base: https://openrouter.ai/api/v1
+      fallbacks: [gpt-oss-120b, stepfun-flash]
 
   - model_name: llama-3.3-70b
     litellm_params:
-      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      model: openrouter/meta-llama/llama-3.3-70b-instruct
       api_key: os.environ/OPENROUTER_API_KEY_3
-      api_base: https://openrouter.ai/api/v1
+      fallbacks: [hermes-405b]
 
   - model_name: hermes-405b
     litellm_params:
@@ -36,7 +36,8 @@ model_list:
   - model_name: gpt-oss-20b
     litellm_params:
       model: openrouter/openai/gpt-oss-20b:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+      fallbacks: [qwen3-coder, stepfun-flash]
 
   - model_name: gemma-3-27b
     litellm_params:
@@ -50,8 +51,9 @@ model_list:
 
   - model_name: stepfun-flash
     litellm_params:
-      model: openrouter/stepfun/step-3.5-flash:free
-      api_key: os.environ/OPENROUTER_API_KEY_2
+      model: openrouter/stepfun/step-1-flash
+      api_key: os.environ/OPENROUTER_API_KEY_3
+      fallbacks: [qwen3-6-plus]
 
   - model_name: glm-4-5-air
     litellm_params:
@@ -60,8 +62,9 @@ model_list:
 
   - model_name: qwen3-6-plus
     litellm_params:
-      model: openrouter/qwen/qwen3-coder:free
+      model: openrouter/qwen/qwen-2.5-7b-instruct
       api_key: os.environ/OPENROUTER_API_KEY_1
+      fallbacks: [stepfun-flash]
 
   - model_name: nemotron-30b
     litellm_params:

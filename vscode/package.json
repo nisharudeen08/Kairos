@@ -193,7 +193,7 @@
         "kairos.autoSelectFamilyTimeout": {
           "type": "number",
           "default": 30000,
-          "description": "Timeout (ms) for each model attempt during auto-selection/fallback",
+          "description": "Timeout (ms) for model family auto-selection",
           "order": 6
         }
       }
