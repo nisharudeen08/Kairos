@@ -1,87 +1,82 @@
 # --- LiteLLM Proxy Configuration ---------------------------------------------
-# KAIROS AI - STABLE OPENROUTER FREE CONFIGURATION
+# KAIROS AI - PERMANENT STABLE FREE CONFIGURATION
+# Using only the most stable, subsidized free models on OpenRouter.
 # ------------------------------------------------------------------------------
 
 model_list:
 
-  # --- FREE FLAGSHIP ---
+  # --- FLAGSHIP (High Capacity Free) ---
 
   - model_name: qwen3-coder
     litellm_params:
-      # Stable and extremely fast 70B model
-      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: llama-3.3-70b
     litellm_params:
-      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: hermes-405b
     litellm_params:
-      # The largest free model available
-      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
+      model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
+      api_key: os.environ/OPENROUTER_API_KEY_2
 
   - model_name: gpt-oss-120b
-    litellm_params:
-      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY_2
-
-  # --- FREE BALANCED ---
-
-  - model_name: gemma-3-27b
-    litellm_params:
-      model: openrouter/qwen/qwen-2.5-72b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
-
-  - model_name: deepseek-v3
-    litellm_params:
-      # Replacement for standard DeepSeek
-      model: openrouter/qwen/qwen-2.5-72b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY_2
-
-  - model_name: gpt-oss-20b
-    litellm_params:
-      # Stable and allows system prompts
-      model: openrouter/qwen/qwen-2.5-72b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
-
-  - model_name: glm-4-5-air
-    litellm_params:
-      model: openrouter/qwen/qwen-2.5-72b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY_2
-
-  - model_name: qwen3-6-plus
     litellm_params:
       model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
       api_key: os.environ/OPENROUTER_API_KEY_2
 
-  # --- FREE REASONING ---
+  # --- BALANCED (Standard Free) ---
+
+  - model_name: gemma-3-27b
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.1-8b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_1
+
+  - model_name: deepseek-v3
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.1-8b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_2
+
+  - model_name: gpt-oss-20b
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.1-8b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_1
+
+  - model_name: glm-4-5-air
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.1-8b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_2
+
+  - model_name: qwen3-6-plus
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.1-8b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_1
+
+  # --- REASONING (Still Free) ---
 
   - model_name: deepseek-r1
     litellm_params:
-      # Verified working R1 Distill
       model: openrouter/deepseek/deepseek-r1-distill-llama-70b:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: lfm-thinking
     litellm_params:
-      # Replacement for failing LFM
-      model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
+      model: openrouter/deepseek/deepseek-r1-distill-llama-70b:free
+      api_key: os.environ/OPENROUTER_API_KEY_2
 
   - model_name: lfm-instruct
     litellm_params:
-      model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
-      api_key: os.environ/OPENROUTER_API_KEY_2
+      model: openrouter/deepseek/deepseek-r1-distill-llama-70b:free
+      api_key: os.environ/OPENROUTER_API_KEY_1
 
 # --- Router settings ---
 router_settings:
   routing_strategy: simple-shuffle
-  num_retries: 3
-  retry_after: 2
-  allowed_fails: 2
+  num_retries: 5
+  retry_after: 3
+  allowed_fails: 3
 
 # --- Proxy settings ---
 litellm_settings:
