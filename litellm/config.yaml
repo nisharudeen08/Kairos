@@ -55,6 +55,18 @@ model_list:
       api_key: os.environ/OPENROUTER_API_KEY_3
       fallbacks: [qwen3-6-plus]
 
+  - model_name: deepseek-v3
+    litellm_params:
+      model: openrouter/deepseek/deepseek-chat
+      api_key: os.environ/OPENROUTER_API_KEY_1
+      fallbacks: [qwen3-coder]
+
+  - model_name: deepseek-r1
+    litellm_params:
+      model: openrouter/deepseek/deepseek-r1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+      fallbacks: [hermes-405b]
+
   - model_name: glm-4-5-air
     litellm_params:
       model: openrouter/z-ai/glm-4.5-air:free

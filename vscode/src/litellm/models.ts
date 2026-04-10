@@ -29,7 +29,9 @@ export type ModelAlias =
     | 'lfm-instruct'
     | 'llama-3.2-3b'
     // Legacy / Fallback
-    | 'claude';
+    | 'claude'
+    | 'deepseek-v3'
+    | 'deepseek-r1';
 
 export type TaskIntent =
     | 'CREATION'
@@ -130,9 +132,23 @@ export const MODELS: Record<ModelAlias, ModelConfig> = {
     'stepfun-flash': {
         alias: 'stepfun-flash',
         litellmModel: 'stepfun-flash',
-        contextWindow: 32_000,
+        contextWindow: 128_000,
         costTier: 'free',
-        label: 'StepFun 3.5 Flash',
+        label: 'StepFun Flash',
+    },
+    'deepseek-v3': {
+        alias: 'deepseek-v3',
+        litellmModel: 'deepseek-v3',
+        contextWindow: 128_000,
+        costTier: 'low',
+        label: 'DeepSeek V3',
+    },
+    'deepseek-r1': {
+        alias: 'deepseek-r1',
+        litellmModel: 'deepseek-r1',
+        contextWindow: 128_000,
+        costTier: 'low',
+        label: 'DeepSeek R1',
     },
     'glm-4-5-air': {
         alias: 'glm-4-5-air',

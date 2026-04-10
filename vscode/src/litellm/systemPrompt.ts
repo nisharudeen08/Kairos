@@ -43,14 +43,42 @@ export function invalidateSystemPromptCache(): void {
  */
 export function buildSystemPrompt(
     extensionUri: vscode.Uri,
-    ctx: WorkspaceContext
+    ctx: WorkspaceContext,
+    mode: string = 'plan'
 ): string {
     const master = loadMasterPrompt(extensionUri);
     const ideBlock = buildIdeContextBlock(ctx);
+    const modeBlock = buildModeInstructionBlock(mode);
 
-    // Replace the IDE context placeholder comment in the .md with the actual values.
-    // The spec says "the host plugin MUST inject one of the following blocks".
-    return `${master}\n\n---\n\n## RUNTIME IDE CONTEXT\n\n\`\`\`\n${ideBlock}\n\`\`\`\n`;
+    return `${master}\n\n${modeBlock}\n\n---\n\n## RUNTIME IDE CONTEXT\n\n\`\`\`\n${ideBlock}\n\`\`\`\n`;
+}
+
+function buildModeInstructionBlock(mode: string): string {
+    switch (mode) {
+        case 'full':
+            return `
+## MODE: FULL ACCESS (AGENTIC)
+- You have UNRESTRICTED ACCESS to tools. 
+- BE PROACTIVE. If you see an error, use <read> and <execute> to diagnose it.
+- If the user asks to "build" something, use <write> to create the files immediately.
+- Do not ask for permission before using tools; just execute them and report the result.
+`.trim();
+        case 'research-expert':
+            return `
+## MODE: RESEARCH EXPERT
+- Focus on deep analysis and architectural trade-offs.
+- Use <read> to explore the codebase before making any suggestions.
+- Provide highly detailed, multi-step plans.
+`.trim();
+        case 'reasoning':
+            return `
+## MODE: DEEP REASONING
+- Think step-by-step. 
+- Explicitly state your assumptions and verify them using <read> or <execute> first.
+`.trim();
+        default:
+            return '';
+    }
 }
 
 function buildIdeContextBlock(ctx: WorkspaceContext): string {

@@ -17,6 +17,8 @@ const modelOptions = [
   { value: 'llama-3.3-70b', label: 'Llama 3.3 70B' },
   { value: 'hermes-405b', label: 'Hermes 405B' },
   { value: 'stepfun-flash', label: 'StepFun Flash' },
+  { value: 'deepseek-v3', label: 'DeepSeek V3' },
+  { value: 'deepseek-r1', label: 'DeepSeek R1' },
 ];
 
 const reasoningLabels = ['Low', 'Med', 'High'];
@@ -99,6 +101,27 @@ modelBtn?.addEventListener('click', (e) => {
     modeDropdown?.classList.add('hidden');
 });
 
+// Selection Listeners (Event Delegation)
+modeList?.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-index]');
+    if (item) {
+        setMode(parseInt(item.getAttribute('data-index') || '0'));
+    }
+});
+
+modelList?.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-index]');
+    if (item) {
+        setModel(parseInt(item.getAttribute('data-index') || '0'));
+    }
+});
+
+// Close outside
+document.addEventListener('click', () => {
+    modeDropdown?.classList.add('hidden');
+    modelDropdown?.classList.add('hidden');
+});
+
 // Close dropdowns on outside click
 document.addEventListener('click', () => {
     modeDropdown?.classList.add('hidden');
@@ -149,10 +172,17 @@ modelList?.addEventListener('click', (e) => {
 });
 
 function renderDropdowns() {
+    const modeIcons = {
+        'agent': 'smart_toy',
+        'fast': 'bolt',
+        'ask': 'help_outline',
+        'plan': 'architecture'
+    };
+
     if (modeList) {
         modeList.innerHTML = modeOptions.map((opt, i) => `
             <div data-index="${i}" class="flex items-center gap-2 p-2 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
-                <span class="material-symbols-outlined text-sm ${opt.color ? 'text-' + opt.color + '-400' : ''}">bolt</span>
+                <span class="material-symbols-outlined text-sm ${opt.color ? 'text-' + opt.color + '-400' : ''}">${modeIcons[opt.value] || 'bolt'}</span>
                 ${opt.label}
             </div>
         `).join('');
@@ -187,8 +217,18 @@ function syncControls() {
   if (modelTextEl) modelTextEl.textContent = model.label;
   if (reasoningTextEl) reasoningTextEl.textContent = reasoningLabels[currentReasoningLevel - 1];
 
-  // Update mode button colors dynamically
+  const modeIcons = {
+    'agent': 'smart_toy',
+    'fast': 'bolt',
+    'ask': 'help_outline',
+    'plan': 'architecture'
+  };
+
+  // Update mode button colors and icon dynamically
   if (modeBtn) {
+    const iconEl = modeBtn.querySelector('.material-symbols-outlined');
+    if (iconEl) iconEl.textContent = modeIcons[mode.value] || 'bolt';
+
     modeBtn.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all uppercase tracking-wider border `;
     
     let colorClass = '';
