@@ -14,25 +14,23 @@ const modeOptions = [
 ];
 
 const modelOptions = [
-  // ── Free Flagship ─────────────────────────────────────────────────────────
-  { value: 'qwen3-coder',   label: 'Qwen 2.5 Coder 32B 🆓', group: 'Free · Flagship' },
-  { value: 'hermes-405b',   label: 'Hermes 3 · 405B 🆓',     group: 'Free · Flagship' },
-  { value: 'llama-3.3-70b', label: 'Llama 3.3 70B · Groq 🆓', group: 'Free · Flagship' },
-  { value: 'gpt-oss-120b',  label: 'Hermes 405B (Alt) 🆓',   group: 'Free · Flagship' },
-  // ── Free Balanced ─────────────────────────────────────────────────────────
-  { value: 'gemma-3-27b',   label: 'Gemma 3 · 27B 🆓',       group: 'Free · Balanced' },
-  { value: 'deepseek-v3',   label: 'Qwen 2.5 · 72B 🆓',      group: 'Free · Balanced' },
-  { value: 'glm-4-5-air',   label: 'GLM 4.5 Air 🆓',         group: 'Free · Balanced' },
-  { value: 'qwen3-6-plus',  label: 'Qwen 2 · 7B 🆓',         group: 'Free · Balanced' },
-  { value: 'gpt-oss-20b',   label: 'GPT 3.5 Turbo 🆓',       group: 'Free · Balanced' },
-  // ── Free Reasoning ────────────────────────────────────────────────────────
-  { value: 'deepseek-r1',   label: 'DeepSeek R1 · Groq 🆓',  group: 'Free · Reasoning'},
-  { value: 'lfm-thinking',  label: 'LFM 32B Thinking 🆓',    group: 'Free · Reasoning'},
-  { value: 'lfm-instruct',  label: 'LFM 40B Instruct 🆓',    group: 'Free · Reasoning'},
+  // ── Free · Fast ────────────────────────────────────────────────────────────
+  { value: 'qwen3-coder',   label: 'Gemini 2.0 Flash Lite 🆓', group: 'Free · Fast' },
+  { value: 'llama-3.3-70b', label: 'Llama 3.3 Stable 🆓',      group: 'Free · Fast' },
+  { value: 'hermes-405b',   label: 'Hermes 405B Stable 🆓',    group: 'Free · Fast' },
+
+  // ── Free · Reliable ────────────────────────────────────────────────────────
+  { value: 'gemma-3-27b',   label: 'Llama 3.1 Reliable 🆓',    group: 'Free · Reliable' },
+  { value: 'deepseek-v3',   label: 'DeepSeek Stable V3 🆓',    group: 'Free · Reliable' },
+  { value: 'gpt-oss-20b',   label: 'GPT-Lite (Reliable) 🆓',   group: 'Free · Reliable' },
+
+  // ── Free · Reasoning ───────────────────────────────────────────────────────
+  { value: 'deepseek-r1',   label: 'DeepSeek R1 Thinking 🆓',  group: 'Free · Thinking' },
+  { value: 'lfm-thinking',  label: 'Advanced Thinking 🆓',     group: 'Free · Thinking' },
 ];
 
 // Models that support reasoning — show reasoning toggle only for these
-const REASONING_MODELS = new Set(['deepseek-r1', 'lfm-thinking', 'lfm-instruct']);
+const REASONING_MODELS = new Set(['deepseek-r1', 'lfm-thinking']);
 
 const reasoningLabels = ['Low', 'Med', 'High'];
 
