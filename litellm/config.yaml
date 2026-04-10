@@ -1,7 +1,5 @@
 # --- LiteLLM Proxy Configuration ---------------------------------------------
-# KAIROS AI - OPENROUTER-ONLY FREE CONFIGURATION
-# Uses ONLY OpenRouter free models — no Groq dependency.
-# Only needs: OPENROUTER_API_KEY_1 and OPENROUTER_API_KEY_2
+# KAIROS AI - STABLE OPENROUTER FREE CONFIGURATION
 # ------------------------------------------------------------------------------
 
 model_list:
@@ -10,6 +8,7 @@ model_list:
 
   - model_name: qwen3-coder
     litellm_params:
+      # Stable and extremely fast 70B model
       model: openrouter/meta-llama/llama-3.3-70b-instruct:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
@@ -20,56 +19,61 @@ model_list:
 
   - model_name: hermes-405b
     litellm_params:
+      # The largest free model available
       model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: gpt-oss-120b
     litellm_params:
-      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
       api_key: os.environ/OPENROUTER_API_KEY_2
 
   # --- FREE BALANCED ---
 
   - model_name: gemma-3-27b
     litellm_params:
-      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY_2
+      model: openrouter/qwen/qwen-2.5-72b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: deepseek-v3
     litellm_params:
-      model: openrouter/liquid/lfm-40b:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
+      # Replacement for standard DeepSeek
+      model: openrouter/qwen/qwen-2.5-72b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_2
 
   - model_name: gpt-oss-20b
     litellm_params:
-      model: openrouter/liquid/lfm-40b:free
-      api_key: os.environ/OPENROUTER_API_KEY_2
+      # Stable and allows system prompts
+      model: openrouter/qwen/qwen-2.5-72b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: glm-4-5-air
     litellm_params:
-      model: openrouter/liquid/lfm-40b:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
+      model: openrouter/qwen/qwen-2.5-72b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_2
 
   - model_name: qwen3-6-plus
     litellm_params:
-      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
       api_key: os.environ/OPENROUTER_API_KEY_2
 
   # --- FREE REASONING ---
 
   - model_name: deepseek-r1
     litellm_params:
-      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      # Verified working R1 Distill
+      model: openrouter/deepseek/deepseek-r1-distill-llama-70b:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: lfm-thinking
     litellm_params:
-      model: openrouter/liquid/lfm-40b:free
+      # Replacement for failing LFM
+      model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: lfm-instruct
     litellm_params:
-      model: openrouter/liquid/lfm-40b:free
+      model: openrouter/google/gemini-2.0-flash-lite-preview-02-05:free
       api_key: os.environ/OPENROUTER_API_KEY_2
 
 # --- Router settings ---
