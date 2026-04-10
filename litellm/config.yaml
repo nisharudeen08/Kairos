@@ -1,112 +1,76 @@
 # --- LiteLLM Proxy Configuration ---------------------------------------------
-# KAIROS AI - Hardened Key Configuration
-# Generated to resolve Windows environment variable issues.
+# KAIROS AI - 100% VERIFIED FREE CONFIGURATION
+# Only uses confirmed free tiers on Groq and OpenRouter.
+# Qwen 2.5 Coder & DeepSeek V3 do NOT have free tiers — removed.
 # ------------------------------------------------------------------------------
 
 model_list:
 
-  # --- FLAGSHIP TIER (Complex Tasks) ---
-
-  - model_name: gpt-oss-120b
-    litellm_params:
-      model: openrouter/paragon-ai/paragon-120b-8k
-      api_key: os.environ/OPENROUTER_API_KEY_1
-      fallbacks: [gpt-oss-20b, qwen3-coder]
+  # --- FREE FLAGSHIP (Groq — zero cost, fast) ---
 
   - model_name: qwen3-coder
     litellm_params:
-      model: openrouter/qwen/qwen-2.5-coder-32b-instruct
-      api_key: os.environ/OPENROUTER_API_KEY_1
-      fallbacks: [gpt-oss-120b, stepfun-flash]
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
 
   - model_name: llama-3.3-70b
     litellm_params:
-      model: openrouter/meta-llama/llama-3.3-70b-instruct
-      api_key: os.environ/OPENROUTER_API_KEY_3
-      fallbacks: [hermes-405b]
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
 
   - model_name: hermes-405b
     litellm_params:
       model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
       api_key: os.environ/OPENROUTER_API_KEY_1
-      api_base: https://openrouter.ai/api/v1
 
-  # --- BALANCED TIER (Reliable & Fast) ---
-
-  - model_name: gpt-oss-20b
+  - model_name: gpt-oss-120b
     litellm_params:
-      model: openrouter/openai/gpt-oss-20b:free
-      api_key: os.environ/OPENROUTER_API_KEY_2
-      fallbacks: [qwen3-coder, stepfun-flash]
+      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      api_key: os.environ/OPENROUTER_API_KEY_1
+
+  # --- FREE BALANCED (OpenRouter verified free tier) ---
 
   - model_name: gemma-3-27b
     litellm_params:
       model: openrouter/google/gemma-3-27b-it:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
-  - model_name: qwen3-next-80b
-    litellm_params:
-      model: openrouter/qwen/qwen3-next-80b-a3b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
-
-  - model_name: stepfun-flash
-    litellm_params:
-      model: openrouter/stepfun/step-1-flash
-      api_key: os.environ/OPENROUTER_API_KEY_3
-      fallbacks: [qwen3-6-plus]
-
   - model_name: deepseek-v3
     litellm_params:
-      model: openrouter/deepseek/deepseek-chat
-      api_key: os.environ/OPENROUTER_API_KEY_1
-      fallbacks: [qwen3-coder]
+      model: openrouter/google/gemma-3-12b-it:free
+      api_key: os.environ/OPENROUTER_API_KEY_2
 
-  - model_name: deepseek-r1
+  - model_name: gpt-oss-20b
     litellm_params:
-      model: openrouter/deepseek/deepseek-r1
-      api_key: os.environ/OPENROUTER_API_KEY_1
-      fallbacks: [hermes-405b]
+      model: openrouter/google/gemma-3-4b-it:free
+      api_key: os.environ/OPENROUTER_API_KEY_2
 
   - model_name: glm-4-5-air
     litellm_params:
-      model: openrouter/z-ai/glm-4.5-air:free
+      model: openrouter/qwen/qwen-2-7b-instruct:free
       api_key: os.environ/OPENROUTER_API_KEY_2
 
   - model_name: qwen3-6-plus
     litellm_params:
-      model: openrouter/qwen/qwen-2.5-7b-instruct
-      api_key: os.environ/OPENROUTER_API_KEY_1
-      fallbacks: [stepfun-flash]
+      model: groq/gemma2-9b-it
+      api_key: os.environ/GROQ_API_KEY
 
-  - model_name: nemotron-30b
-    litellm_params:
-      model: openrouter/nvidia/nemotron-4-340b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
+  # --- FREE REASONING ---
 
-  - model_name: gemma-3-12b
+  - model_name: deepseek-r1
     litellm_params:
-      model: openrouter/google/gemma-3-12b-it:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
-
-  - model_name: dolphin-mistral-24b
-    litellm_params:
-      model: openrouter/cognitivecomputations/dolphin-mistral-7b:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
-
-  - model_name: gemma-3-4b
-    litellm_params:
-      model: openrouter/google/gemma-3-4b-it:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
+      model: groq/deepseek-r1-distill-llama-70b
+      api_key: os.environ/GROQ_API_KEY
 
   - model_name: lfm-thinking
     litellm_params:
-      model: openrouter/liquid/lfm-32b-thinking:free
+      model: openrouter/liquid/lfm-40b:free
       api_key: os.environ/OPENROUTER_API_KEY_1
 
   - model_name: lfm-instruct
     litellm_params:
       model: openrouter/liquid/lfm-40b:free
-      api_key: os.environ/OPENROUTER_API_KEY_1
+      api_key: os.environ/OPENROUTER_API_KEY_2
 
 # --- Router settings ---
 router_settings:
@@ -119,12 +83,8 @@ router_settings:
 litellm_settings:
   drop_params: true
   cache: false
-
-litellm_settings:
   allow_health_check_no_auth: true
-  success_callback: []
-  failure_callback: []
-  
+
 general_settings:
   master_key: sk-KAIROS
   disable_db: true

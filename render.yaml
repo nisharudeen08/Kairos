@@ -1,19 +1,49 @@
+# ─── Render.com Blueprint — KAIROS LiteLLM Proxy ─────────────────────────────
+# Deploy: connect your GitHub repo to Render and it will auto-detect this file.
+# Docs: https://render.com/docs/blueprint-spec
+# ─────────────────────────────────────────────────────────────────────────────
+
 services:
   - type: web
     name: kairos-litellm
     runtime: docker
-    plan: free
-    dockerContext: .
+    plan: free                     # Render free tier (750 hrs/month)
+    region: singapore              # Closest free region to India
+    branch: main
+    dockerContext: .               # Repo root — so COPY litellm/... works
     dockerfilePath: ./litellm/Dockerfile
-    healthCheckPath: /
+
+    # ── Health check ──────────────────────────────────────────────────────────
+    healthCheckPath: /health
+
+    # ── Auto-deploy on push ───────────────────────────────────────────────────
+    autoDeploy: true
+
+    # ── Environment Variables ──────────────────────────────────────────────────
+    # Set the values manually in the Render dashboard (Environment tab).
+    # "sync: false" means Render won't auto-generate a value — you must paste it.
     envVars:
+      # ── LiteLLM security ────────────────────────────────────────────────────
       - key: LITELLM_MASTER_KEY
-        sync: false
+        value: sk-KAIROS           # same as your local .env
+
+      # ── OpenRouter keys (free tier only) ────────────────────────────────────
       - key: OPENROUTER_API_KEY_1
-        sync: false
+        sync: false                # paste your key in Render dashboard
+
       - key: OPENROUTER_API_KEY_2
         sync: false
-      - key: OPENROUTER_API_KEY_3
+
+      # ── Groq key (all Groq models) ───────────────────────────────────────────
+      - key: GROQ_API_KEY
         sync: false
-      - key: LOG_LEVEL
-        value: INFO
+
+      # ── Python tuning ────────────────────────────────────────────────────────
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+
+      - key: PORT
+        value: "4000"
