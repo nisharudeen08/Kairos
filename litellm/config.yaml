@@ -107,6 +107,9 @@ litellm_settings:
 
 litellm_settings:
   allow_health_check_no_auth: true
-
+  success_callback: []
+  failure_callback: []
+  
 general_settings:
-  master_key: os.environ/LITELLM_MASTER_KEY
+  master_key: sk-KAIROS
+  disable_db: true

@@ -167,7 +167,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private _getOrchestrator(): AgentOrchestrator {
         if (!this._orchestrator) {
             const config = vscode.workspace.getConfiguration('KAIROS');
-            const baseUrl = config.get<string>('litellmBaseUrl', 'http://localhost:4000');
+            const baseUrl = config.get<string>('litellmBaseUrl', 'https://kairos-litellm.onrender.com');
             const apiKey = config.get<string>('litellmApiKey', 'sk-KAIROS');
             const timeoutMs = config.get<number>('autoSelectFamilyTimeout', 1000);
             this._orchestrator = new AgentOrchestrator(

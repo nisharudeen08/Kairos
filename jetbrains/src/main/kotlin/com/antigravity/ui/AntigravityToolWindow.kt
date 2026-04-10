@@ -27,7 +27,7 @@ class AntigravityToolWindowFactory : ToolWindowFactory {
 class AntigravityToolWindow(private val project: Project) {
     private val mainPanel = JPanel(BorderLayout())
     private val browser = JBCefBrowser()
-    private val client = LiteLLMClient("http://localhost:4000", "sk-antigravity")
+    private val client = LiteLLMClient("https://kairos-litellm.onrender.com", "sk-KAIROS")
 
     init {
         setupBrowser()
