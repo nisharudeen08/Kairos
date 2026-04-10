@@ -5,7 +5,7 @@ services:
     plan: free
     dockerContext: .
     dockerfilePath: ./litellm/Dockerfile
-    healthCheckPath: /ping
+    healthCheckPath: /
     envVars:
       - key: LITELLM_MASTER_KEY
         sync: false
