@@ -25,7 +25,7 @@ services:
     envVars:
       # ── LiteLLM security ────────────────────────────────────────────────────
       - key: LITELLM_MASTER_KEY
-        value: sk-KAIROS           # same as your local .env
+        sync: false
 
       # ── OpenRouter keys (free tier only) ────────────────────────────────────
       - key: OPENROUTER_API_KEY_1
@@ -34,8 +34,26 @@ services:
       - key: OPENROUTER_API_KEY_2
         sync: false
 
+      - key: OPENROUTER_API_KEY_3
+        sync: false
+
+      - key: OPENROUTER_API_KEY_4
+        sync: false
+
+      - key: OPENROUTER_API_KEY_5
+        sync: false
+
       # ── Groq key (all Groq models) ───────────────────────────────────────────
       - key: GROQ_API_KEY
+        sync: false
+
+      - key: MISTRAL_API_KEY
+        sync: false
+
+      - key: GEMINI_API_KEY
+        sync: false
+
+      - key: GITHUB_API_KEY
         sync: false
 
       # ── Python tuning ────────────────────────────────────────────────────────
