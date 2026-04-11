@@ -14,23 +14,59 @@ const modeOptions = [
 ];
 
 const modelOptions = [
-  // ── Free · Fast ────────────────────────────────────────────────────────────
-  { value: 'qwen3-coder',   label: 'Gemini 2.0 Flash Lite 🆓', group: 'Free · Fast' },
-  { value: 'llama-3.3-70b', label: 'Llama 3.3 Stable 🆓',      group: 'Free · Fast' },
-  { value: 'hermes-405b',   label: 'Hermes 405B Stable 🆓',    group: 'Free · Fast' },
+  // ── AUTO (AI picks best model based on task) ──
+  { value: "auto",              label: "Auto (AI picks)",         provider: "Auto",       group: "Auto" },
 
-  // ── Free · Reliable ────────────────────────────────────────────────────────
-  { value: 'gemma-3-27b',   label: 'Llama 3.1 Reliable 🆓',    group: 'Free · Reliable' },
-  { value: 'deepseek-v3',   label: 'DeepSeek Stable V3 🆓',    group: 'Free · Reliable' },
-  { value: 'gpt-oss-20b',   label: 'GPT-Lite (Reliable) 🆓',   group: 'Free · Reliable' },
+  // ── AUTOCOMPLETE (OpenRouter) ──
+  { value: "step-3.5-flash",       label: "Step 3.5 Flash",          provider: "OpenRouter", group: "Autocomplete" },
+  { value: "gpt-oss-20b",          label: "GPT-OSS 20B",             provider: "OpenRouter", group: "Autocomplete" },
+  { value: "nemotron-nano-9b",     label: "Nemotron Nano 9B",        provider: "OpenRouter", group: "Autocomplete" },
+  { value: "arcee-trinity-mini",   label: "Arcee Trinity Mini",      provider: "OpenRouter", group: "Autocomplete" },
 
-  // ── Free · Reasoning ───────────────────────────────────────────────────────
-  { value: 'deepseek-r1',   label: 'DeepSeek R1 Thinking 🆓',  group: 'Free · Thinking' },
-  { value: 'lfm-thinking',  label: 'Advanced Thinking 🆓',     group: 'Free · Thinking' },
+  // ── CHAT (OpenRouter) ──
+  { value: "llama-3.3-70b",        label: "Llama 3.3 70B",           provider: "OpenRouter", group: "Chat" },
+  { value: "hermes-3-405b",        label: "Hermes 3 405B",           provider: "OpenRouter", group: "Chat" },
+  { value: "gemma-3-27b",          label: "Gemma 3 27B",             provider: "OpenRouter", group: "Chat" },
+  { value: "gemma-4-31b",          label: "Gemma 4 31B",             provider: "OpenRouter", group: "Chat" },
+
+  // ── CODING (OpenRouter) ──
+  { value: "qwen3-coder",          label: "Qwen3 Coder 480B ⭐",     provider: "OpenRouter", group: "Coding" },
+  { value: "qwen3-next-80b",       label: "Qwen3 Next 80B",          provider: "OpenRouter", group: "Coding" },
+  { value: "nemotron-3-super",     label: "Nemotron 3 Super 120B",   provider: "OpenRouter", group: "Coding" },
+  { value: "gpt-oss-120b",         label: "GPT-OSS 120B",            provider: "OpenRouter", group: "Coding" },
+
+  // ── VISION (OpenRouter) ──
+  { value: "nemotron-nano-12b-vl", label: "Nemotron Nano 12B VL",    provider: "OpenRouter", group: "Vision" },
+  { value: "gemma-4-26b-vision",   label: "Gemma 4 26B Vision",      provider: "OpenRouter", group: "Vision" },
+
+  // ── SPECIALIST (OpenRouter) ──
+  { value: "dolphin-mistral-24b",  label: "Dolphin Mistral 24B",     provider: "OpenRouter", group: "Specialist" },
+  { value: "lfm-2.5-1.2b-thinking",label: "LFM 2.5 1.2B Thinking",  provider: "OpenRouter", group: "Specialist" },
+
+  // ── GROQ (fastest) ──
+  { value: "groq-llama-3.1-8b",   label: "⚡ Llama 3.1 8B",         provider: "Groq",       group: "Groq" },
+  { value: "groq-llama-3.3-70b",  label: "⚡ Llama 3.3 70B",        provider: "Groq",       group: "Groq" },
+  { value: "groq-llama-4-scout",  label: "⚡ Llama 4 Scout",         provider: "Groq",       group: "Groq" },
+  { value: "groq-qwen-qwq-32b",   label: "⚡ Qwen QwQ 32B",          provider: "Groq",       group: "Groq" },
+
+  // ── MISTRAL ──
+  { value: "codestral",            label: "Codestral ⭐",             provider: "Mistral",    group: "Mistral" },
+  { value: "mistral-small",        label: "Mistral Small",           provider: "Mistral",    group: "Mistral" },
+  { value: "devstral-small",       label: "Devstral Small",          provider: "Mistral",    group: "Mistral" },
+
+  // ── GEMINI ──
+  { value: "gemini-2.5-flash-lite",label: "Gemini 2.5 Flash Lite",  provider: "Gemini",     group: "Gemini" },
+  { value: "gemini-2.5-flash",     label: "Gemini 2.5 Flash",       provider: "Gemini",     group: "Gemini" },
+  { value: "gemini-2.5-pro",       label: "Gemini 2.5 Pro",         provider: "Gemini",     group: "Gemini" },
+
+  // ── GITHUB MODELS ──
+  { value: "github-gpt-4o-mini",   label: "GPT-4o Mini",            provider: "GitHub",     group: "GitHub" },
+  { value: "github-llama-3.3-70b", label: "Llama 3.3 70B",          provider: "GitHub",     group: "GitHub" },
+  { value: "github-deepseek-r1",   label: "DeepSeek R1",            provider: "GitHub",     group: "GitHub" },
 ];
 
 // Models that support reasoning — show reasoning toggle only for these
-const REASONING_MODELS = new Set(['deepseek-r1', 'lfm-thinking']);
+const REASONING_MODELS = new Set(['groq-qwen-qwq-32b', 'lfm-2.5-1.2b-thinking', 'github-deepseek-r1']);
 
 const reasoningLabels = ['Low', 'Med', 'High'];
 
@@ -43,7 +79,7 @@ let streamBuffer      = '';
 /** @type {AbortController | null} */ let streamAbortController = null;
 
 let currentModeIndex      = 0;  // index into modeOptions
-let currentModelIndex     = 0;  // index into modelOptions
+let currentModelIndex     = 0;  // 0 = Auto (first entry)
 let currentReasoningLevel = 1;  // 1 | 2 | 3
 
 /** @type {string[]} */ let pendingImages = [];
@@ -235,6 +271,7 @@ window.addEventListener('message', (event) => {
     // Session replay — visually reconstruct past conversation
     case 'replayUser':      replayUserMessage(msg.text); break;
     case 'replayAssistant': replayAssistantMessage(msg.text); break;
+    case 'permissionRequest': showPermissionDialog(msg.scope, msg.detail); break;
   }
 });
 
@@ -254,18 +291,23 @@ function buildDropdowns() {
   }
 
   if (modelList) {
-    // Group models
-    const groups = [...new Set(modelOptions.map(m => m.group))];
-    modelList.innerHTML = groups.map(group => {
+    // Group models by provider (Auto group comes first)
+    const providers = [...new Set(modelOptions.map(m => m.provider))];
+    modelList.innerHTML = providers.map(provider => {
       const items = modelOptions
         .map((opt, i) => ({ opt, i }))
-        .filter(({ opt }) => opt.group === group);
+        .filter(({ opt }) => opt.provider === provider);
+      const isAuto = provider === 'Auto';
       return `
-        <div class="px-2 pt-2 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-slate-600">${group}</div>
+        <div class="px-2 pt-2 pb-0.5 text-[9px] font-bold uppercase tracking-widest ${
+          isAuto ? 'text-violet-400' : 'text-slate-600'
+        } border-b border-white/5 mb-1">── ${provider} ──</div>
         ${items.map(({ opt, i }) => `
           <div data-index="${i}"
-               class="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] text-slate-300 hover:text-white">
-            <span class="material-symbols-outlined text-sm text-slate-500">neurology</span>
+               class="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] ${
+                 isAuto ? 'text-violet-300 font-semibold' : 'text-slate-300'
+               } hover:text-white">
+            ${isAuto ? '🤖' : `<span class="opacity-40 text-[9px] font-mono mr-1">[${opt.provider}]</span>`}
             ${opt.label}
           </div>
         `).join('')}
@@ -293,7 +335,7 @@ function syncControls() {
   const model = modelOptions[currentModelIndex];
 
   if (modeTextEl)      modeTextEl.textContent  = mode.label;
-  if (modelTextEl)     modelTextEl.textContent  = model.label;
+  if (modelTextEl)     modelTextEl.textContent  = `[${model.provider}] ${model.label}`;
   if (reasoningTextEl) reasoningTextEl.textContent = reasoningLabels[currentReasoningLevel - 1];
 
   // Update mode button color
@@ -1000,4 +1042,69 @@ function createEl(tag, className) {
 
 function scrollToBottom() {
   if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// ─── Permission Dialog ────────────────────────────────────────────────────────
+
+/**
+ * Shows an inline permission prompt when the AI wants to run a terminal
+ * command or write a file. The user can grant for once or the whole session.
+ * @param {'terminal'|'fileWrite'} scope
+ * @param {string} detail
+ */
+function showPermissionDialog(scope, detail) {
+  removeEmptyState();
+  const icon   = scope === 'terminal' ? '💻' : '📝';
+  const title  = scope === 'terminal' ? 'Terminal Access' : 'File Write Access';
+  const wrapper = createEl('div', 'flex justify-start w-full py-1 permission-dialog');
+  wrapper.innerHTML = `
+    <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);
+                border-radius:12px;padding:12px 14px;max-width:92%;width:100%;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:16px;">${icon}</span>
+        <span style="font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:0.06em;">${title}</span>
+      </div>
+      <div style="font-size:11px;color:#cbd5e1;margin-bottom:10px;font-family:monospace;
+                  background:rgba(0,0,0,0.2);padding:6px 8px;border-radius:6px;word-break:break-all;">
+        ${escapeHtml(detail)}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button data-perm="once" style="padding:5px 12px;border-radius:7px;border:1px solid rgba(251,191,36,0.4);
+          background:rgba(251,191,36,0.15);color:#fbbf24;font-size:10px;font-weight:700;cursor:pointer;">
+          Allow Once
+        </button>
+        <button data-perm="session" style="padding:5px 12px;border-radius:7px;border:1px solid rgba(251,191,36,0.6);
+          background:rgba(251,191,36,0.25);color:#f59e0b;font-size:10px;font-weight:700;cursor:pointer;">
+          Allow This Session
+        </button>
+        <button data-perm="deny" style="padding:5px 12px;border-radius:7px;border:1px solid rgba(239,68,68,0.3);
+          background:rgba(239,68,68,0.1);color:#f87171;font-size:10px;font-weight:700;cursor:pointer;">
+          Deny
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Attach handlers
+  wrapper.querySelectorAll('[data-perm]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const level = /** @type {HTMLElement} */ (btn).getAttribute('data-perm');
+      wrapper.remove();
+      if (level === 'deny') {
+        appendSystemMessage('⛔ Permission denied.');
+        return;
+      }
+      vscode.postMessage({
+        type: 'permissionGrant',
+        scope,
+        level: level === 'session' ? 'session' : 'once',
+      });
+      appendSystemMessage(level === 'session'
+        ? `✅ ${title} granted for this session.`
+        : `✅ ${title} granted once.`);
+    });
+  });
+
+  messagesEl.appendChild(wrapper);
+  scrollToBottom();
 }

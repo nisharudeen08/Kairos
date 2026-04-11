@@ -18,7 +18,8 @@ type InboundMessage =
     | { type: 'openChanges' }
     | { type: 'reviewChanges' }
     | { type: 'openWeb' }
-    | { type: 'openArtifacts' };
+    | { type: 'openArtifacts' }
+    | { type: 'permissionGrant'; scope: 'terminal' | 'fileWrite'; level: 'once' | 'session' };
 
 export interface ChatSession {
     id: string;
@@ -37,7 +38,8 @@ type OutboundMessage =
     | { type: 'fileChange'; path: string; content: string }
     | { type: 'historyList'; sessions: ChatSession[] }
     | { type: 'replayUser'; text: string }
-    | { type: 'replayAssistant'; text: string };
+    | { type: 'replayAssistant'; text: string }
+    | { type: 'permissionRequest'; scope: 'terminal' | 'fileWrite'; detail: string };
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'kairos.chatView';
@@ -48,6 +50,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private _history: ChatMessage[] = [];
     private _sessionId: string = Date.now().toString();
     private _isStreaming = false;
+
+    /** Session-level permission grants: 'none' | 'once' | 'session' */
+    private _terminalPermission: 'none' | 'session' = 'none';
+    private _fileWritePermission: 'none' | 'session' = 'none';
+    /** Pending permission resolvers waiting for user response from webview */
+    private _pendingPermissions: Map<string, (granted: boolean) => void> = new Map();
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -220,22 +228,46 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 }
                 break;
             case 'openTerminal':
+                // Toggle terminal in the bottom panel (doesn't close sidebar on most setups)
                 vscode.commands.executeCommand('workbench.action.terminal.toggleTerminal');
+                // Refocus chat after a brief delay so panel open animation doesn't steal focus
+                setTimeout(() => vscode.commands.executeCommand('kairos.chatView.focus'), 300);
                 break;
             case 'openChanges':
-                vscode.commands.executeCommand('workbench.view.scm');
+                // Open SCM in a new editor group instead of sidebar to avoid stealing focus
+                vscode.commands.executeCommand('workbench.view.scm').then(() => {
+                    setTimeout(() => vscode.commands.executeCommand('kairos.chatView.focus'), 200);
+                });
                 break;
             case 'reviewChanges':
                 vscode.commands.executeCommand('workbench.action.compareEditor.nextChange').then(
-                    () => {},
-                    () => vscode.commands.executeCommand('git.openAllChanges')
+                    () => setTimeout(() => vscode.commands.executeCommand('kairos.chatView.focus'), 200),
+                    () => vscode.commands.executeCommand('git.openAllChanges').then(
+                        () => setTimeout(() => vscode.commands.executeCommand('kairos.chatView.focus'), 200)
+                    )
                 );
                 break;
             case 'openWeb':
                 vscode.env.openExternal(vscode.Uri.parse('https://google.com'));
                 break;
             case 'openArtifacts':
-                vscode.commands.executeCommand('workbench.view.explorer');
+                // Open explorer without collapsing chat: open file tree in a floating way
+                vscode.commands.executeCommand('workbench.view.explorer').then(() => {
+                    setTimeout(() => vscode.commands.executeCommand('kairos.chatView.focus'), 200);
+                });
+                break;
+            case 'permissionGrant':
+                // Resolve any pending permission promise
+                const resolver = this._pendingPermissions.get(message.scope);
+                if (resolver) {
+                    resolver(true);
+                    this._pendingPermissions.delete(message.scope);
+                }
+                // Optionally persist for the session
+                if (message.level === 'session') {
+                    if (message.scope === 'terminal') this._terminalPermission = 'session';
+                    if (message.scope === 'fileWrite') this._fileWritePermission = 'session';
+                }
                 break;
         }
     }
@@ -252,6 +284,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         const trimmed = text.trim();
         if (!trimmed) {
             return;
+        }
+
+        // Agent mode grants full bypass — pre-approve terminal and file writes for the session
+        if (mode === 'agent') {
+            this._terminalPermission = 'session';
+            this._fileWritePermission = 'session';
         }
 
         this._isStreaming = true;
@@ -289,6 +327,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                     this._post({ type: 'error', message });
                     logger.error(`[Orchestrator] ${message}`);
                 },
+                onPermissionRequest: async (scope: 'terminal' | 'fileWrite', detail: string) => {
+                    // Agent mode: always granted (no prompt)
+                    if (mode === 'agent') return true;
+                    // Session permission already granted
+                    if (scope === 'terminal' && this._terminalPermission === 'session') return true;
+                    if (scope === 'fileWrite' && this._fileWritePermission === 'session') return true;
+                    // Ask the user via the chat UI
+                    return this._requestPermission(scope, detail);
+                },
             }, { mode, model, reasoningLevel });
         } catch (err) {
             this._isStreaming = false;
@@ -296,6 +343,27 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             this._post({ type: 'error', message: msg });
             logger.error('Unexpected error in _processUserMessage', err);
         }
+    }
+
+    /**
+     * Sends a permission request to the webview and waits for the user
+     * to respond with permissionGrant or to dismiss (deny).
+     * Times out after 60 seconds (treat as denial).
+     */
+    private _requestPermission(scope: 'terminal' | 'fileWrite', detail: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            // Store resolver for this scope
+            this._pendingPermissions.set(scope, resolve);
+            // Tell the webview to show the permission dialog
+            this._post({ type: 'permissionRequest', scope, detail });
+            // Auto-deny after 60s if no response
+            setTimeout(() => {
+                if (this._pendingPermissions.has(scope)) {
+                    this._pendingPermissions.delete(scope);
+                    resolve(false);
+                }
+            }, 60_000);
+        });
     }
 
     private _post(message: OutboundMessage): void {
@@ -308,7 +376,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             const config = vscode.workspace.getConfiguration('kairos');
             const baseUrl = config.get<string>('litellmBaseUrl', 'https://kairos-litellm.onrender.com');
             const apiKey = config.get<string>('litellmApiKey', 'sk-KAIROS');
-            const timeoutMs = config.get<number>('autoSelectFamilyTimeout', 30000);
+            const timeoutMs = config.get<number>('autoSelectFamilyTimeout', 120000);
             this._orchestrator = new AgentOrchestrator(
                 this._extensionUri,
                 baseUrl,

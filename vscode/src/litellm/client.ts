@@ -43,10 +43,10 @@ export class LiteLLMClient {
         modelAlias: ModelAlias,
         messages: ChatMessage[]
     ): AsyncGenerator<StreamChunk> {
-        const modelConfig = MODELS[modelAlias];
+        const actualModel = MODELS[modelAlias]?.litellmModel || modelAlias;
         const endpoint = `${this.baseUrl}/v1/chat/completions`;
 
-        logger.debug(`[LiteLLM] POST ${endpoint} model=${modelConfig.litellmModel}`);
+        logger.debug(`[LiteLLM] POST ${endpoint} model=${actualModel}`);
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), this.timeoutMs); // Default auto-select family attempt timeout
@@ -60,7 +60,7 @@ export class LiteLLMClient {
                     Authorization: `Bearer ${this.apiKey}`,
                 },
                 body: JSON.stringify({
-                    model: modelConfig.litellmModel,
+                    model: actualModel,
                     messages,
                     stream: true,
                     temperature: 0.3, // lower = more deterministic (cache-friendly)
@@ -109,7 +109,7 @@ export class LiteLLMClient {
         modelAlias: ModelAlias,
         messages: ChatMessage[]
     ): Promise<string> {
-        const modelConfig = MODELS[modelAlias];
+        const actualModel = MODELS[modelAlias]?.litellmModel || modelAlias;
         const endpoint = `${this.baseUrl}/v1/chat/completions`;
 
         const controller = new AbortController();
@@ -123,7 +123,7 @@ export class LiteLLMClient {
                     Authorization: `Bearer ${this.apiKey}`,
                 },
                 body: JSON.stringify({
-                    model: modelConfig.litellmModel,
+                    model: actualModel,
                     messages,
                     stream: false,
                     temperature: 0.1,

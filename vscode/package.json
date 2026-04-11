@@ -192,7 +192,7 @@
         },
         "kairos.autoSelectFamilyTimeout": {
           "type": "number",
-          "default": 30000,
+          "default": 120000,
           "description": "Timeout (ms) for model family auto-selection",
           "order": 6
         }

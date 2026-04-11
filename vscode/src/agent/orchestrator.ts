@@ -23,6 +23,8 @@ export interface OrchestratorCallbacks {
     onDone(metadata: AgentMetadata): void;
     onError(message: string): void;
     onFilePending?: (path: string, content: string) => void;
+    /** Returns true if operation is allowed. Agent mode always returns true. */
+    onPermissionRequest?: (scope: 'terminal' | 'fileWrite', detail: string) => Promise<boolean>;
 }
 
 /** Rough chars-per-token estimate for context budgeting */
@@ -89,7 +91,7 @@ export class AgentOrchestrator {
         const metadata: AgentMetadata = {
             agent,
             modelAlias: selectedAlias,
-            modelLabel: MODELS[selectedAlias].label,
+            modelLabel: MODELS[selectedAlias]?.label || selectedAlias,
             modelReason: reason,
             confidence,
             intent: classification.intent,
@@ -153,7 +155,7 @@ export class AgentOrchestrator {
             }
 
             // Success — finalise with (possibly updated) metadata
-            callbacks.onDone({ ...metadata, modelAlias, modelLabel: MODELS[modelAlias].label });
+            callbacks.onDone({ ...metadata, modelAlias, modelLabel: MODELS[modelAlias]?.label || modelAlias });
 
         } catch (err) {
             const litellmErr = err as LiteLLMError;
@@ -217,11 +219,19 @@ export class AgentOrchestrator {
     }
 
     private async handleToolCalls(text: string, callbacks: OrchestratorCallbacks): Promise<void> {
+        const askPermission = callbacks.onPermissionRequest;
+
         // 1. EXECUTE Tags: <execute>cmd</execute>
         const execRegex = /<execute>([\s\S]*?)<\/execute>/gi;
         let execMatch;
         while ((execMatch = execRegex.exec(text)) !== null) {
             const cmd = execMatch[1].trim();
+            // Ask permission (agent mode bypasses via ChatViewProvider)
+            const allowed = askPermission ? await askPermission('terminal', `Run: \`${cmd}\``) : true;
+            if (!allowed) {
+                callbacks.onToken(`\n\n> ⛔ **Blocked:** Terminal command \`${cmd}\` was denied.`);
+                continue;
+            }
             callbacks.onToken(`\n\n> ⚡ **System:** \`${cmd}\`...`);
             try {
                 await runTerminalCommand(cmd);
@@ -251,15 +261,20 @@ export class AgentOrchestrator {
         while ((writeMatch = writeRegex.exec(text)) !== null) {
             const filePath = writeMatch[1].trim();
             const content = writeMatch[2];
-            
-            // Signal the review UI instead of writing
+
+            // Ask permission for file write
+            const allowed = askPermission ? await askPermission('fileWrite', `Write to \`${filePath}\``) : true;
+            if (!allowed) {
+                callbacks.onToken(`\n\n> ⛔ **Blocked:** File write to \`${filePath}\` was denied.`);
+                continue;
+            }
             callbacks.onToken(`\n\n> 📥 **Pending Change:** \`${filePath}\` (Review below)`);
             if (callbacks.onFilePending) {
                 callbacks.onFilePending(filePath, content);
             }
         }
 
-        // 4. LIST Tags: <list>dirPath</list> — lets the agent explore the workspace
+        // 4. LIST Tags: <list>dirPath</list>
         const listRegex = /<list>([\s\S]*?)<\/list>/gi;
         let listMatch;
         while ((listMatch = listRegex.exec(text)) !== null) {
