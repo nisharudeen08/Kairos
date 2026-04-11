@@ -515,16 +515,52 @@ router_settings:
   retry_after: 3
   allowed_fails: 3
   fallbacks:
-    - {"step-3.5-flash": ["groq-llama-3.1-8b", "gpt-oss-20b", "nemotron-nano-9b", "arcee-trinity-mini"]}
-    - {"groq-llama-3.1-8b": ["step-3.5-flash", "gemini-2.5-flash-lite", "gpt-oss-20b"]}
-    - {"groq-llama-3.3-70b": ["llama-3.3-70b", "gemini-2.5-flash", "nemotron-3-super"]}
-    - {"qwen3-coder": ["nemotron-3-super", "gpt-oss-120b"]}
-    - {"qwen3-next-80b": ["groq-llama-3.3-70b", "gemma-3-27b", "gpt-oss-120b"]}
-    - {"llama-3.3-70b": ["hermes-3-405b", "gemma-3-27b"]}
-    - {"codestral": ["devstral-small", "qwen3-coder", "gpt-oss-120b"]}
-    - {"gemini-2.5-flash": ["gemini-2.5-flash-lite", "llama-3.3-70b"]}
-    - {"gemini-2.5-pro": ["gemini-2.5-flash", "nemotron-3-super"]}
-    - {"github-gpt-4o-mini": ["gemini-2.5-flash-lite", "gpt-oss-20b"]}
+    # ── OpenRouter Autocomplete ──────────────────────────────────────────────
+    - {"step-3.5-flash":        ["groq-llama-3.1-8b", "gpt-oss-20b", "nemotron-nano-9b", "arcee-trinity-mini"]}
+    - {"gpt-oss-20b":           ["step-3.5-flash", "groq-llama-3.1-8b", "nemotron-nano-9b"]}
+    - {"nemotron-nano-9b":      ["gpt-oss-20b", "step-3.5-flash", "groq-llama-3.1-8b"]}
+    - {"arcee-trinity-mini":    ["step-3.5-flash", "gpt-oss-20b", "groq-llama-3.1-8b"]}
+
+    # ── OpenRouter Chat ──────────────────────────────────────────────────────
+    - {"llama-3.3-70b":         ["hermes-3-405b", "gemma-3-27b", "groq-llama-3.3-70b"]}
+    - {"hermes-3-405b":         ["llama-3.3-70b", "gemma-3-27b", "groq-llama-3.3-70b"]}
+    - {"gemma-3-27b":           ["llama-3.3-70b", "hermes-3-405b", "gemini-2.5-flash"]}
+    - {"gemma-4-31b":           ["gemma-3-27b", "llama-3.3-70b", "gemini-2.5-flash"]}
+
+    # ── OpenRouter Coding ────────────────────────────────────────────────────
+    - {"qwen3-coder":           ["nemotron-3-super", "gpt-oss-120b", "codestral"]}
+    - {"qwen3-next-80b":        ["groq-llama-3.3-70b", "gemma-3-27b", "gpt-oss-120b"]}
+    - {"nemotron-3-super":      ["qwen3-coder", "gpt-oss-120b", "groq-llama-3.3-70b"]}
+    - {"gpt-oss-120b":          ["qwen3-coder", "nemotron-3-super", "codestral"]}
+
+    # ── OpenRouter Vision ────────────────────────────────────────────────────
+    - {"nemotron-nano-12b-vl":  ["gemma-4-26b-vision", "gemini-2.5-flash", "llama-3.3-70b"]}
+    - {"gemma-4-26b-vision":    ["nemotron-nano-12b-vl", "gemini-2.5-flash", "llama-3.3-70b"]}
+
+    # ── OpenRouter Specialist ────────────────────────────────────────────────
+    - {"dolphin-mistral-24b":   ["mistral-small", "groq-llama-3.3-70b", "llama-3.3-70b"]}
+    - {"lfm-2.5-1.2b-thinking": ["groq-qwen-qwq-32b", "github-deepseek-r1", "gemini-2.5-pro"]}
+
+    # ── Groq ─────────────────────────────────────────────────────────────────
+    - {"groq-llama-3.1-8b":     ["step-3.5-flash", "gemini-2.5-flash-lite", "gpt-oss-20b"]}
+    - {"groq-llama-3.3-70b":    ["llama-3.3-70b", "gemini-2.5-flash", "nemotron-3-super"]}
+    - {"groq-llama-4-scout":    ["groq-llama-3.3-70b", "llama-3.3-70b", "gemini-2.5-flash"]}
+    - {"groq-qwen-qwq-32b":     ["github-deepseek-r1", "lfm-2.5-1.2b-thinking", "gemini-2.5-pro"]}
+
+    # ── Mistral ───────────────────────────────────────────────────────────────
+    - {"codestral":             ["devstral-small", "qwen3-coder", "gpt-oss-120b"]}
+    - {"mistral-small":         ["gemma-3-27b", "llama-3.3-70b", "groq-llama-3.3-70b"]}
+    - {"devstral-small":        ["codestral", "qwen3-coder", "nemotron-3-super"]}
+
+    # ── Gemini ────────────────────────────────────────────────────────────────
+    - {"gemini-2.5-flash-lite": ["groq-llama-3.1-8b", "gpt-oss-20b", "step-3.5-flash"]}
+    - {"gemini-2.5-flash":      ["gemini-2.5-flash-lite", "llama-3.3-70b", "groq-llama-3.3-70b"]}
+    - {"gemini-2.5-pro":        ["gemini-2.5-flash", "nemotron-3-super", "hermes-3-405b"]}
+
+    # ── GitHub Models ─────────────────────────────────────────────────────────
+    - {"github-gpt-4o-mini":    ["gemini-2.5-flash-lite", "gpt-oss-20b", "groq-llama-3.1-8b"]}
+    - {"github-llama-3.3-70b":  ["llama-3.3-70b", "groq-llama-3.3-70b", "gemini-2.5-flash"]}
+    - {"github-deepseek-r1":    ["groq-qwen-qwq-32b", "gemini-2.5-pro", "hermes-3-405b"]}
 
 # --- Proxy settings ---
 litellm_settings:
