@@ -9,6 +9,22 @@
 
 model_list:
 
+  # --- LOCAL DEEPSEEK R1 14B (Quality Mode) ---
+  # Works from both Windows and Ubuntu
+  - model_name: deepseek-local-quality
+    litellm_params:
+      model: ollama/kairos-r1-14b
+      api_base: http://10.71.16.238:11434
+      timeout: 120
+      stream: true
+
+  - model_name: deepseek-local-fast
+    litellm_params:
+      model: ollama/deepseek-r1:8b
+      api_base: http://10.71.16.238:11434
+      timeout: 30
+      stream: true
+
   # --- AUTOCOMPLETE GROUP - fast, low latency ---
 
   - model_name: step-3.5-flash
@@ -516,6 +532,9 @@ router_settings:
   allowed_fails: 3
   fallbacks:
     # ── OpenRouter Autocomplete ──────────────────────────────────────────────
+    - {"deepseek-local-quality": ["qwen3-coder", "nemotron-3-super", "gpt-oss-120b"]}
+    - {"deepseek-local-fast": ["groq-llama-3.1-8b", "step-3.5-flash"]}
+
     - {"step-3.5-flash":        ["groq-llama-3.1-8b", "gpt-oss-20b", "nemotron-nano-9b", "arcee-trinity-mini"]}
     - {"gpt-oss-20b":           ["step-3.5-flash", "groq-llama-3.1-8b", "nemotron-nano-9b"]}
     - {"nemotron-nano-9b":      ["gpt-oss-20b", "step-3.5-flash", "groq-llama-3.1-8b"]}

@@ -23,6 +23,9 @@ services:
     # Set the values manually in the Render dashboard (Environment tab).
     # "sync: false" means Render won't auto-generate a value — you must paste it.
     envVars:
+      - key: OLLAMA_BASE_URL
+        sync: false
+
       # ── LiteLLM security ────────────────────────────────────────────────────
       - key: LITELLM_MASTER_KEY
         sync: false
