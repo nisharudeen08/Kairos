@@ -18,6 +18,7 @@ import {
     BrainSwitchLogger,
     SwitchEvent,
     getVRAMStatus,
+    needsBrainSwitch,
 } from './brainSwitch';
 
 const SECRET_PATTERNS = [
@@ -378,8 +379,11 @@ export class AgentOrchestrator {
         const callingModel = MODELS[callingAlias]?.litellmModel ?? callingAlias;
         const targetModel  = MODELS[targetAlias]?.litellmModel  ?? targetAlias;
 
+        const targetNeedsSwitch = needsBrainSwitch(targetModel);
+        const callerNeedsSwitch = needsBrainSwitch(callingModel);
+
         logger.info(`\n[BrainSwitch] ══════════════════════════════`);
-        logger.info(`[BrainSwitch] ${callingAlias} → ${targetAlias}`);
+        logger.info(`[BrainSwitch] ${callingAlias} → ${targetAlias} (target_needs_switch=${targetNeedsSwitch})`);
         logger.info(`[BrainSwitch] ══════════════════════════════\n`);
         callbacks.onStatus?.(`[🧠 Brain Switch: ${callingAlias} → ${targetAlias}]`, true);
 
@@ -387,17 +391,22 @@ export class AgentOrchestrator {
         let vramBefore = 0;
 
         try {
-            const statusBefore = await getVRAMStatus().catch(() => null);
-            vramBefore = statusBefore?.usedGB ?? 0;
+            if (targetNeedsSwitch) {
+                const statusBefore = await getVRAMStatus().catch(() => null);
+                vramBefore = statusBefore?.usedGB ?? 0;
 
-            // ── Phase 1: Unload calling model ────────────────────────────────
-            logger.info(`[BrainSwitch] Phase 1: Unloading ${callingModel}`);
-            this.brainController.setState(BrainState.ABORTING);
-            callbacks.onStatus?.(`[🧠 Unloading ${callingAlias}…]`, true);
+                // ── Phase 1: Unload calling model (if it was on Windows) ──────
+                if (callerNeedsSwitch) {
+                    logger.info(`[BrainSwitch] Phase 1: Unloading ${callingModel}`);
+                    this.brainController.setState(BrainState.ABORTING);
+                    callbacks.onStatus?.(`[🧠 Unloading ${callingAlias}…]`, true);
 
-            await forceUnloadModel();
-            await adaptiveCooldown(callingModel);
-            await waitForVRAMClear(MODEL_SIZES_GB[targetModel] ?? MODEL_SIZES_GB['default']);
+                    await forceUnloadModel();
+                    await adaptiveCooldown(callingModel);
+                }
+
+                await waitForVRAMClear(MODEL_SIZES_GB[targetModel] ?? MODEL_SIZES_GB['default']);
+            }
 
             // ── Phase 2: Run target model ─────────────────────────────────────
             logger.info(`[BrainSwitch] Phase 2: Loading ${targetModel}`);
@@ -419,13 +428,18 @@ export class AgentOrchestrator {
 
             callbacks.onStatus?.(`[🧠 ${targetAlias} responded]`, true);
 
-            // ── Phase 3: Unload target model ──────────────────────────────────
-            logger.info(`[BrainSwitch] Phase 3: Unloading ${targetModel}`);
-            this.brainController.setState(BrainState.ABORTING);
+            if (targetNeedsSwitch) {
+                // ── Phase 3: Unload target model ──────────────────────────────
+                logger.info(`[BrainSwitch] Phase 3: Unloading ${targetModel}`);
+                this.brainController.setState(BrainState.ABORTING);
 
-            await forceUnloadModel();
-            await adaptiveCooldown(targetModel);
-            await waitForVRAMClear(MODEL_SIZES_GB[callingModel] ?? MODEL_SIZES_GB['default']);
+                await forceUnloadModel();
+                await adaptiveCooldown(targetModel);
+
+                if (callerNeedsSwitch) {
+                    await waitForVRAMClear(MODEL_SIZES_GB[callingModel] ?? MODEL_SIZES_GB['default']);
+                }
+            }
 
             // ── Phase 4: Restore calling model context ────────────────────────
             logger.info(`[BrainSwitch] Phase 4: Restoring ${callingAlias} context`);

@@ -38,6 +38,7 @@ export type ModelAlias =
     | '360-light-local'
     | 'gemma-local-fast'
     | 'qwen-local'
+    | 'qwen-ubuntu'
     | 'gemma-4-scout-local';
 
 export type TaskIntent =
@@ -119,15 +120,23 @@ export const MODELS: Record<string, ModelConfig> = {
 
     'qwen-local': {
         alias: 'qwen-local',
-        litellmModel: 'qwen-coder',
+        litellmModel: 'qwen-coder-win',
         contextWindow: 32_000,
         costTier: 'free',
-        label: 'Qwen 2.5 Coder 7B (Local)',
+        label: 'Qwen 2.5 Coder 7B (Windows)',
+        provider: 'Ollama'
+    },
+    'qwen-ubuntu': {
+        alias: 'qwen-ubuntu',
+        litellmModel: 'qwen-coder-ubuntu',
+        contextWindow: 32_000,
+        costTier: 'free',
+        label: 'Qwen 2.5 Coder 7B (Ubuntu)',
         provider: 'Ollama'
     },
     'gemma-4-scout-local': {
         alias: 'gemma-4-scout-local',
-        litellmModel: 'ollama/gemma4:e4b',
+        litellmModel: 'gemma-4-scout-local',
         contextWindow: 8_000,
         costTier: 'free',
         label: 'Gemma 4 e4B (Local)',
@@ -142,7 +151,7 @@ export const FALLBACK_GROUPS: Record<string, ModelAlias[]> = {
     flagship:  ['qwen3-coder', 'hermes-3-405b', 'llama-3.3-70b', 'codestral'],
     balanced:  ['gemma-3-27b', 'groq-llama-3.3-70b', 'gpt-oss-20b'],
     reasoning: ['github-deepseek-r1', 'groq-qwen-qwq-32b', 'lfm-2.5-1.2b-thinking'],
-    local:     ['kwaicoder-local', '360-light-local', 'deepseek-local-quality', 'qwen-local', 'gemma-4-scout-local', 'deepseek-local-fast', 'gemma-local-fast'],
+    local:     ['kwaicoder-local', '360-light-local', 'deepseek-local-quality', 'qwen-local', 'qwen-ubuntu', 'gemma-4-scout-local', 'deepseek-local-fast', 'gemma-local-fast'],
 };
 
 export function selectModel(

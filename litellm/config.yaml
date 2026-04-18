@@ -1,58 +1,50 @@
 model_list:
 
-  # ── WINDOWS MODELS via Cloudflare Tunnel ──────────
-  # Small fast models on Windows RTX 3050
+  # ── ALL ON WINDOWS via Cloudflare Tunnel ──────────
 
   - model_name: "gemma-local-fast"
     litellm_params:
       model: "ollama/gemma:2b"
       api_base: "https://conscious-victoria-behavioral-larger.trycloudflare.com"
       timeout: 60
-      headers:
-        host: "conscious-victoria-behavioral-larger.trycloudflare.com"
 
-  - model_name: "qwen-coder"
+  - model_name: "qwen-coder-win"
     litellm_params:
       model: "ollama/qwen2.5-coder:7b"
       api_base: "https://conscious-victoria-behavioral-larger.trycloudflare.com"
       timeout: 120
-      headers:
-        host: "conscious-victoria-behavioral-larger.trycloudflare.com"
-
-  # ── UBUNTU MODELS via Cloudflare Tunnel ───────────
-  # Heavy models on Ubuntu
-
-  - model_name: "kairos-r1-14b"
-    litellm_params:
-      model: "ollama/kairos-r1-14b:latest"
-      api_base: "https://UBUNTU-TUNNEL-URL"
-      timeout: 300
-      headers:
-        host: "UBUNTU-TUNNEL-URL"
-
-  - model_name: "360-light"
-    litellm_params:
-      model: "ollama/360-light-local:latest"
-      api_base: "https://UBUNTU-TUNNEL-URL"
-      timeout: 300
-      headers:
-        host: "UBUNTU-TUNNEL-URL"
-
-  - model_name: "kairos-coder"
-    litellm_params:
-      model: "ollama/fervent_mcclintock/KwaiCoder:Q4_K_M"
-      api_base: "https://UBUNTU-TUNNEL-URL"
-      timeout: 300
-      headers:
-        host: "UBUNTU-TUNNEL-URL"
 
   - model_name: "deepseek-r1-8b"
     litellm_params:
       model: "ollama/deepseek-r1:8b"
-      api_base: "https://UBUNTU-TUNNEL-URL"
+      api_base: "https://conscious-victoria-behavioral-larger.trycloudflare.com"
       timeout: 180
-      headers:
-        host: "UBUNTU-TUNNEL-URL"
+
+  - model_name: "kairos-r1-14b"
+    litellm_params:
+      model: "ollama/kairos-r1-14b:latest"
+      api_base: "https://conscious-victoria-behavioral-larger.trycloudflare.com"
+      timeout: 300
+
+  - model_name: "360-light"
+    litellm_params:
+      model: "ollama/360-light-local:latest"
+      api_base: "https://conscious-victoria-behavioral-larger.trycloudflare.com"
+      timeout: 300
+
+  - model_name: "kairos-coder"
+    litellm_params:
+      model: "ollama/fervent_mcclintock/KwaiCoder:Q4_K_M"
+      api_base: "https://conscious-victoria-behavioral-larger.trycloudflare.com"
+      timeout: 300
+
+  # ── UBUNTU — qwen only ────────────────────────────
+
+  - model_name: "qwen-coder-ubuntu"
+    litellm_params:
+      model: "ollama/qwen2.5-coder:7b"
+      api_base: "https://UBUNTU-TUNNEL-URL"
+      timeout: 120
 
   # ── CLOUD FALLBACK ────────────────────────────────
 
@@ -72,7 +64,6 @@ router_settings:
   routing_strategy: "usage-based-routing"
   num_retries: 2
   timeout: 300
-  retry_after: 5
   fallback_models:
     - "openrouter-mistral"
     - "github-gpt4o"

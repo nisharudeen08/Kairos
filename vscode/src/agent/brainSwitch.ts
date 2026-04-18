@@ -28,6 +28,13 @@ export enum BrainState {
     LOADING   = 'loading'     // new model starting up
 }
 
+export interface VRAMStatus {
+    freeGB: number;
+    usedGB: number;
+    totalGB: number;
+    modelsLoaded: string[];
+}
+
 export class BrainSwitchController {
     private currentState: BrainState = BrainState.IDLE;
     private currentModel: string | null = null;
@@ -194,12 +201,39 @@ export async function waitForVRAMClear(
 
 /** Approximate VRAM footprint per model in GB */
 export const MODEL_SIZES_GB: Record<string, number> = {
-    'ollama/kairos-r1-14b':  9.1,   
-    'ollama/deepseek-r1:8b': 5.6,   
-    'ollama/360-light-local': 9.1,   
-    'ollama/gemma:2b':       1.6,   
-    'default':               6.0,
+    // Windows models — share 6GB VRAM pool
+    "gemma-local-fast":  1.7,   // fits easily
+    "qwen-coder-win":    4.7,   // fits cleanly
+    "deepseek-r1-8b":    5.2,   // tight but fits
+    "kairos-r1-14b":     9.0,   // overflows → RAM spill
+    "360-light":         9.0,   // overflows → RAM spill
+    "kairos-coder":     10.0,   // overflows → RAM spill
+
+    // Ubuntu — separate VRAM pool, no conflict
+    "qwen-coder-ubuntu": 4.7,   // Ubuntu VRAM, irrelevant to Windows
+
+    // Cloud — no VRAM
+    "openrouter-mistral": 0.0,
+    "github-gpt4o":       0.0,
+
+    "default": 6.0
 };
+
+/**
+ * VRAM safety groups — only Windows models need brain switch protection.
+ */
+export const REQUIRES_BRAIN_SWITCH = [
+    "gemma-local-fast",
+    "qwen-coder-win",
+    "deepseek-r1-8b",
+    "kairos-r1-14b",
+    "360-light",
+    "kairos-coder"
+];
+
+export function needsBrainSwitch(modelName: string): boolean {
+    return REQUIRES_BRAIN_SWITCH.includes(modelName);
+}
 
 /**
  * Model-size-aware cooldown before loading the next model.
