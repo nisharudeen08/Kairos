@@ -1,37 +1,43 @@
 <idea-plugin>
-    <id>com.antigravity.plugin</id>
-    <name>Antigravity AI</name>
-    <version>0.1.0</version>
-    <vendor>Antigravity Dev</vendor>
+  <id>ai.kairos.jetbrains</id>
+  <name>Kairos AI</name>
+  <vendor>KairosAI</vendor>
+  <description>Kairos AI chat powered by LiteLLM proxy</description>
 
-    <description><![CDATA[
-      Multi-Agent · LiteLLM-Routed · Cost-Optimised AI Engineering Assistant<br>
-      <em>Free models first. Streaming responses. Multi-IDE context.</em>
-    ]]></description>
+  <depends>com.intellij.modules.platform</depends>
 
-    <depends>com.intellij.modules.platform</depends>
+  <extensions defaultExtensionNs="com.intellij">
 
-    <extensions defaultExtensionNs="com.intellij">
-        <!-- Sidebar Tool Window -->
-        <toolWindow id="AntigravityChat" 
-                    anchor="right" 
-                    secondary="false" 
-                    icon="/media/sidebar-icon.svg" 
-                    factoryClass="com.antigravity.ui.AntigravityToolWindowFactory"/>
-        
-        <!-- Settings Panel -->
-        <applicationConfigurable id="com.antigravity.settings"
-                                 displayName="Antigravity AI"
-                                 instance="com.antigravity.settings.AntigravityConfigurable"/>
-    </extensions>
+    <!-- Tool Window (sidebar panel) -->
+    <toolWindow
+      id="Kairos"
+      displayName="Kairos AI"
+      anchor="right"
+      factoryClass="com.antigravity.ui.KairosToolWindowFactory"
+      icon="/icons/kairos.svg"/>
 
-    <actions>
-        <!-- Editor Context Menu -->
-        <group id="Antigravity.ContextMenu" text="Antigravity AI" popup="true" icon="AllIcons.Actions.Lightning">
-            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-            <action id="Antigravity.Fix" class="com.antigravity.actions.FixAction" text="Fix" description="Fix the selected code"/>
-            <action id="Antigravity.Explain" class="com.antigravity.actions.ExplainAction" text="Explain" description="Explain the selected code"/>
-            <action id="Antigravity.Optimize" class="com.antigravity.actions.OptimizeAction" text="Optimize" description="Optimize the selected code"/>
-        </group>
-    </actions>
+    <!-- Settings page -->
+    <applicationConfigurable
+      parentId="tools"
+      instance="ai.kairos.settings.KairosSettingsConfigurable"
+      id="ai.kairos.settings"
+      displayName="Kairos AI"/>
+
+    <!-- Persistent settings storage -->
+    <applicationService
+      serviceImplementation="ai.kairos.settings.KairosSettings"/>
+
+  </extensions>
+
+  <actions>
+    <!-- Alt+K shortcut to open chat -->
+    <action
+      id="Kairos.OpenChat"
+      class="ai.kairos.actions.OpenKairosChatAction"
+      text="Open Kairos Chat"
+      description="Open Kairos AI chat panel">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt K"/>
+    </action>
+  </actions>
+
 </idea-plugin>

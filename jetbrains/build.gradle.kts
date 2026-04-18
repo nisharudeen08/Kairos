@@ -1,44 +1,43 @@
-import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-
 plugins {
-    id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.22"
-    id("org.jetbrains.intellij.platform") version "2.0.0"
+  id("java")
+  id("org.jetbrains.kotlin.jvm") version "1.9.22"
+  id("org.jetbrains.intellij") version "1.17.4"
 }
 
-group = "com.antigravity"
-version = "0.1.0"
+group = "ai.kairos"
+version = "1.0.0"
 
-repositories {
-    mavenCentral()
-    intellijPlatform {
-        defaultRepositories()
-    }
+repositories { mavenCentral() }
+
+intellij {
+  version.set("2023.3")
+  type.set("IC")              // IC = IntelliJ Community, works for all JB IDEs
+  plugins.set(listOf())
 }
 
 dependencies {
-    intellijPlatform {
-        intellijIdeaCommunity("2023.3")
-        bundledPlugins("com.intellij.java")
-        instrumentationTools()
-        testFramework(TestFrameworkType.Platform)
-    }
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
-}
-
-intellijPlatform {
-    pluginConfiguration {
-        name = "Antigravity AI"
-        id = "com.antigravity.plugin"
-        description = "Multi-Agent · LiteLLM-Routed Engineering Assistant"
-        vendor {
-            name = "Antigravity Dev"
-        }
-    }
+  implementation("com.squareup.okhttp3:okhttp:4.12.0")
+  implementation("org.json:json:20240303")
 }
 
 tasks {
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
+  withType<JavaCompile> {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+  }
+  withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions.jvmTarget = "17"
+  }
+  patchPluginXml {
+    sinceBuild.set("231")
+    untilBuild.set("261.*")
+  }
+  signPlugin {
+    certificateChain.set(System.getenv("CERTIFICATE_CHAIN") ?: "")
+    privateKey.set(System.getenv("PRIVATE_KEY") ?: "")
+    password.set(System.getenv("PRIVATE_KEY_PASSWORD") ?: "")
+  }
+  publishPlugin {
+    token.set(System.getenv("PUBLISH_TOKEN") ?: "")
+  }
 }

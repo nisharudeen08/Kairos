@@ -27,7 +27,12 @@ class AntigravityToolWindowFactory : ToolWindowFactory {
 class AntigravityToolWindow(private val project: Project) {
     private val mainPanel = JPanel(BorderLayout())
     private val browser = JBCefBrowser()
-    private val client = LiteLLMClient("https://kairos-litellm.onrender.com", "sk-KAIROS")
+    private val client = LiteLLMClient(
+        System.getenv("LITELLM_BASE_URL") ?: System.getenv("KAIROS_LITELLM_BASE_URL") ?: "https://kairos-litellm.onrender.com",
+        System.getenv("LITELLM_MASTER_KEY") ?: System.getenv("KAIROS_LITELLM_API_KEY") ?: "sk-KAIROS"
+    )
+
+    private val jsQuery = com.intellij.ui.jcef.JBCefJSQuery.create(browser as com.intellij.ui.jcef.JBCefBrowserBase)
 
     init {
         setupBrowser()
@@ -35,28 +40,23 @@ class AntigravityToolWindow(private val project: Project) {
     }
 
     private fun setupBrowser() {
-        val router = CefMessageRouter.create()
-        router.addHandler(object : CefMessageRouterHandlerAdapter() {
-            override fun onQuery(
-                browser: CefBrowser?,
-                frame: CefFrame?,
-                queryId: Long,
-                request: String?,
-                persistent: Boolean,
-                callback: CefQueryCallback?
-            ): Boolean {
-                if (request == null) return false
-                
-                // Very simple handle for messages from JS
-                // request is a JSON string from chat.js: { type, text, mode, reasoningLevel }
+        jsQuery.addHandler { request ->
+            if (request != null) {
                 handleJsMessage(request)
-                
-                callback?.success("")
-                return true
             }
-        }, true)
+            null
+        }
 
-        browser.jbCefClient.addMessageRouter(router)
+        browser.jbCefClient.addLoadHandler(object : org.cef.handler.CefLoadHandlerAdapter() {
+            override fun onLoadStart(browser: CefBrowser?, frame: CefFrame?, transitionType: org.cef.network.CefRequest.TransitionType?) {
+                val shim = """
+                    window.cefQuery = function(req) {
+                        ${jsQuery.inject("req.request")}
+                    };
+                """.trimIndent()
+                browser?.executeJavaScript(shim, frame?.url, 0)
+            }
+        }, browser.cefBrowser)
         
         // Load the chat interface by merging resources into one blob for 100% reliability
         val html = loadMergedHtml()
@@ -65,9 +65,16 @@ class AntigravityToolWindow(private val project: Project) {
 
     private fun loadMergedHtml(): String {
         // In a production plugin, we use this::class.java.getResourceAsStream(...)
-        // For this workspace, we read from the local paths we just established
-        val basePath = project.basePath + "/jetbrains/src/main/resources/webview"
-        val htmlFile = File("$basePath/chat.html")
+        // Since we are loading from the project directly, let's point to the real vscode files
+        val projectRoot = project.basePath ?: ""
+        var basePath = "$projectRoot/vscode/media"
+        var htmlFile = File("$basePath/chat.html")
+        
+        if (!htmlFile.exists()) {
+            basePath = "$projectRoot/../vscode/media"
+            htmlFile = File("$basePath/chat.html")
+        }
+        
         val cssFile = File("$basePath/chat.css")
         val jsFile = File("$basePath/chat.js")
 
@@ -110,7 +117,7 @@ class AntigravityToolWindow(private val project: Project) {
                 val js = "window.antigravityReceiveMessage({ \"type\": \"token\", \"content\": \"$content\" });" +
                          "window.antigravityReceiveMessage({ \"type\": \"done\", \"metadata\": { \"agent\": \"Planner\", \"modelLabel\": \"${selectedModel.uppercase()}\", \"confidence\": \"High\", \"modelReason\": \"Local Proxy\" } });"
                 
-                browser.executeJavaScript(js, browser.cefBrowser.url, 0)
+                browser.cefBrowser.executeJavaScript(js, browser.cefBrowser.url, 0)
             }.start()
         }
     }

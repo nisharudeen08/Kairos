@@ -1,0 +1,487 @@
+localProcessExtensionHost.ts:380 [Extension Host] STOPPED on first line for debugging on port 53024
+_tryFindDebugPort @ localProcessExtensionHost.ts:380
+log.ts:440  INFO Started local extension host with pid 11188.
+log.ts:440  INFO Loading development extension at c:\Users\nisharu deen\Downloads\PROJECT\extension\vscode
+log.ts:460   ERR Extension 'github.copilot-chat' appears in product.json but enables LESS API proposals than the extension wants.
+package.json (LOSES): agentSessionsWorkspace
+chatDebug
+chatHooks
+extensionsAny
+newSymbolNamesProvider
+interactive
+codeActionAI
+activeComment
+commentReveal
+contribCommentThreadAdditionalMenu
+contribCommentsViewThreadMenus
+contribChatEditorInlineGutterMenu
+documentFiltersExclusive
+embeddings
+findTextInFiles
+findTextInFiles2
+languageModelToolSupportsModel
+findFiles2
+textSearchProvider
+terminalDataWriteEvent
+terminalExecuteCommandEvent
+terminalSelection
+terminalQuickFixProvider
+mappedEditsProvider
+aiRelatedInformation
+aiSettingsSearch
+chatParticipantAdditions
+defaultChatParticipant
+contribSourceControlInputBoxMenu
+authLearnMore
+testObserver
+aiTextSearchProvider
+chatParticipantPrivate
+chatProvider
+contribDebugCreateConfiguration
+chatReferenceDiagnostic
+textSearchProvider2
+chatReferenceBinaryData
+languageModelSystem
+languageModelCapabilities
+inlineCompletionsAdditions
+chatStatusItem
+taskProblemMatcherStatus
+contribLanguageModelToolSets
+textDocumentChangeReason
+resolvers
+taskExecutionTerminal
+dataChannels
+languageModelThinkingPart
+chatSessionsProvider
+devDeviceId
+contribEditorContentMenu
+chatPromptFiles
+mcpServerDefinitions
+tabInputMultiDiff
+workspaceTrust
+environmentPower
+terminalTitle
+toolInvocationApproveCombination
+product.json (WINS): agentSessionsWorkspace
+interactive
+terminalDataWriteEvent
+terminalExecuteCommandEvent
+terminalSelection
+terminalQuickFixProvider
+chatParticipantAdditions
+defaultChatParticipant
+embeddings
+chatProvider
+mappedEditsProvider
+aiRelatedInformation
+aiSettingsSearch
+codeActionAI
+findTextInFiles
+findTextInFiles2
+textSearchProvider
+textSearchProvider2
+activeComment
+commentReveal
+contribSourceControlInputBoxMenu
+contribCommentEditorActionsMenu
+contribCommentThreadAdditionalMenu
+contribCommentsViewThreadMenus
+contribChatEditorInlineGutterMenu
+extensionAffinity
+newSymbolNamesProvider
+findFiles2
+chatReferenceDiagnostic
+extensionsAny
+authLearnMore
+testObserver
+aiTextSearchProvider
+documentFiltersExclusive
+chatParticipantPrivate
+contribDebugCreateConfiguration
+inlineCompletionsAdditions
+chatReferenceBinaryData
+languageModelSystem
+languageModelCapabilities
+languageModelThinkingPart
+languageModelToolSupportsModel
+chatStatusItem
+taskProblemMatcherStatus
+contribLanguageModelToolSets
+textDocumentChangeReason
+resolvers
+taskExecutionTerminal
+dataChannels
+chatSessionsProvider
+devDeviceId
+contribEditorContentMenu
+tokenInformation
+chatPromptFiles
+mcpServerDefinitions
+tabInputMultiDiff
+workspaceTrust
+chatHooks
+chatDebug
+environmentPower
+terminalTitle
+DELTA: toolInvocationApproveCombination
+error @ log.ts:460
+log.ts:460   ERR Proceeding with EXTRA proposals (toolInvocationApproveCombination) because extension is in development mode. Still, this EXTENSION WILL BE BROKEN unless product.json is updated.
+error @ log.ts:460
+languagesAssociations.ts:71 Overwriting extension <<.hbs>> to now point to mime <<text/x-handlebars>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.handlebars>> to now point to mime <<text/x-handlebars>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.slnx>> to now point to mime <<text/x-slnx>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.log>> to now point to mime <<log>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.svg>> to now point to mime <<image/svg+xml>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.xaml>> to now point to mime <<text/x-xaml>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.s>> to now point to mime <<text/x-platformio-debug.asm>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.properties>> to now point to mime <<text/x-java-properties>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.dtd>> to now point to mime <<text/x-dtd>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.ent>> to now point to mime <<text/x-dtd>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.mod>> to now point to mime <<text/x-dtd>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.shader>> to now point to mime <<text/x-UnityShader>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.cginc>> to now point to mime <<text/x-UnityShader>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.compute>> to now point to mime <<text/x-UnityShader>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.hlsl>> to now point to mime <<text/x-UnityShader>>
+(anonymous) @ languagesAssociations.ts:71
+languagesAssociations.ts:71 Overwriting extension <<.gradle>> to now point to mime <<text/x-gradle>>
+(anonymous) @ languagesAssociations.ts:71
+log.ts:440  INFO [Blackboxapp.blackbox]: Command `extension.saveCodeToCloud` already registered by BLACKBOXAI #1 AI Coding Agent and Coding Copilot (Blackboxapp.blackbox)
+log.ts:440  INFO [Continue.continue]: Command `continue.focusContinueInput` already registered by Continue - open-source AI code agent (Continue.continue)
+log.ts:460   ERR [Blackboxapp.blackboxagent]: Menu item references a command `blackbox.openBillingPortal` which is not defined in the 'commands' section.
+error @ log.ts:460
+log.ts:450  WARN [redhat.vscode-xml]: Cannot register 'redhat.telemetry.enabled'. This property is already registered.
+warn @ log.ts:450
+log.ts:450  WARN [redhat.vscode-yaml]: Cannot register 'redhat.telemetry.enabled'. This property is already registered.
+warn @ log.ts:450
+log.ts:450  WARN [twxs.cmake]: Cannot register 'cmake.cmakePath'. This property is already registered.
+warn @ log.ts:450
+log.ts:460   ERR Ignoring python.analysis.indexing.followSymlinkedFolders as python.analysis.indexing is true
+error @ log.ts:460
+webviewElement.ts:411 Unrecognized feature: 'local-network-access'.
+_createElement @ webviewElement.ts:411
+webviewElement.ts:491 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.
+mountTo @ webviewElement.ts:491
+log.ts:460   ERR Ignoring python.analysis.indexing.followSymlinkedFolders as python.analysis.indexing is true
+error @ log.ts:460
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 Debugger attached.
+log.ts:440  INFO Settings Sync: Account status changed from uninitialized to unavailable
+marketplace.visualstudio.com/_apis/public/gallery/vscode/antigravity-dev/antigravity/latest:1  Failed to load resource: the server responded with a status of 404 ()
+log.ts:440  INFO [perf] Render performance baseline is 25ms
+log.ts:440  INFO Auto updating outdated extensions. ms-vscode.cpptools-extension-pack
+log.ts:460   ERR [Extension Host] (node:11188) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `Code --trace-deprecation ...` to show where the warning was created)
+error @ log.ts:460
+console.ts:139 [Extension Host] (node:11188) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `Code --trace-deprecation ...` to show where the warning was created) (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+leo @ console.ts:139
+log.ts:460   ERR [Extension Host] (node:11188) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+error @ log.ts:460
+console.ts:139 [Extension Host] (node:11188) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead. (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+leo @ console.ts:139
+console.ts:139 [Extension Host] Checking for extension Blackboxapp.blackboxagent installation... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Extension Blackboxapp.blackboxagent is installed. (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.dart.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/dart/syntaxes/dart.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/dart-code.dart-code-3.132.0/syntaxes/dart.json
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.python.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/python/syntaxes/MagicPython.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/ms-python.vscode-pylance-2026.2.1/grammars/PylancePython.tmLanguage
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.java.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/java/syntaxes/java.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/redhat.java-1.53.0-win32-x64/language-support/java/java.tmLanguage.json
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.yaml.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/yaml/syntaxes/yaml.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/redhat.vscode-yaml-1.21.0/syntaxes/yaml.tmLanguage.json
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.cmake.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/ms-vscode.cmake-tools-1.22.28/syntaxes/CMake.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/twxs.cmake-0.0.17/syntaxes/CMake.tmLanguage
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.cmakecache.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/ms-vscode.cmake-tools-1.22.28/syntaxes/CMakeCache.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/twxs.cmake-0.0.17/syntaxes/CMakeCache.tmLanguage
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.groovy.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/groovy/syntaxes/groovy.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/vscjava.vscode-gradle-3.17.2/syntaxes/groovy.tmLanguage.json
+register @ TMScopeRegistry.ts:46
+log.ts:460   ERR [Extension Host] INFO: Could not find files for the given pattern(s).
+error @ log.ts:460
+console.ts:139 [Extension Host] INFO: Could not find files for the given pattern(s). (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+leo @ console.ts:139
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 INFO: Could not find files for the given pattern(s).
+webviewElement.ts:491 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.
+mountTo @ webviewElement.ts:491
+log.ts:450  WARN [mainThreadStorage] large extension state detected (extensionId: qwenlm.qwen-code-vscode-ide-companion, global: true): 2018.5908203125kb. Consider to use 'storageUri' or 'globalStorageUri' to store this data on disk instead.
+warn @ log.ts:450
+log.ts:450  WARN [mainThreadStorage] large extension state detected (extensionId: Blackboxapp.blackboxagent, global: true): 2311.603515625kb. Consider to use 'storageUri' or 'globalStorageUri' to store this data on disk instead.
+warn @ log.ts:450
+log.ts:440  INFO Extension host (LocalProcess pid: 11188) is unresponsive.
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 Debugger attached.
+webviewElement.ts:491 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.
+mountTo @ webviewElement.ts:491
+log.ts:440  INFO UNRESPONSIVE extension host: starting to profile NOW
+log.ts:460   ERR [Extension Host] (node:11188) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+error @ log.ts:460
+console.ts:139 [Extension Host] (node:11188) ExperimentalWarning: SQLite is an experimental feature and might change at any time (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+leo @ console.ts:139
+log.ts:460   ERR [Extension Host] ECONNRESET
+error @ log.ts:460
+console.ts:139 [Extension Host] ECONNRESET (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+leo @ console.ts:139
+log.ts:460   ERR [Extension Host] ECONNRESET
+error @ log.ts:460
+console.ts:139 [Extension Host] ECONNRESET (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+leo @ console.ts:139
+log.ts:440  INFO Extension host (LocalProcess pid: 11188) is responsive.
+console.ts:139 [Extension Host] Created lock file at C:\Users\nisharu deen\.claude\ide\32362.lock (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Set CLAUDE_CODE_SSE_PORT=32362 in terminal environment (in-memory) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Registering inline completion item provider for pro user (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Added provider to context subscriptions (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Checking for extension Blackboxapp.blackbox installation... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Extension Blackboxapp.blackbox is installed. (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:06 [ERROR]: node-loader:
+Error: c:\Users\nisharu deen\.vscode\extensions\codeium.codeium-1.48.2\dist\5415f7470b2c078d53ddfde78cdc9983.node is not a valid Win32 application.
+c:\Users\nisharu deen\.vscode\extensions\codeium.codeium-1.48.2\dist\5415f7470b2c078d53ddfde78cdc9983.node (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 (VSCode) 2026-04-07 17:39:06 [ERROR]: node-loader:
+Error: c:\Users\nisharu deen\.vscode\extensions\codeium.codeium-1.48.2\dist\5415f7470b2c078d53ddfde78cdc9983.node is not a valid Win32 application.
+c:\Users\nisharu deen\.vscode\extensions\codeium.codeium-1.48.2\dist\5415f7470b2c078d53ddfde78cdc9983.node
+
+console.ts:139 [Extension Host] Error loading color theme:  SyntaxError: Expected double-quoted property name in JSON at position 14312 (line 494 column 13)
+    at JSON.parse (<anonymous>)
+    at parseThemeString (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:828359:15)
+    at getTheme (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:828414:22)
+    at _InlineTipManager.<instance_members_initializer> (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:897057:15)
+    at new _InlineTipManager (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:897066:18)
+    at _InlineTipManager.getInstance (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:897062:40)
+    at setupInlineTips (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:896987:20)
+    at activateExtension (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:897330:3)
+    at dynamicImportAndActivate (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:897445:16)
+    at sb._activate (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:501:15965)
+    at sb._waitForDepsThenActivate (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:501:15907)
+    at sb._initialize (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:501:15274) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Error loading color theme:  SyntaxError: Expected double-quoted property name in JSON at position 14312 (line 494 column 13)
+    at JSON.parse (<anonymous>)
+    at parseThemeString (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:828359:15)
+    at getTheme (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:828414:22)
+    at _JumpManager.<instance_members_initializer> (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:845360:16)
+    at new _JumpManager (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:845365:18)
+    at _JumpManager.getInstance (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:845378:36)
+    at new ContinueCompletionProvider (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:847963:40)
+    at new _VsCodeExtension (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:896719:35)
+    at activateExtension (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:897331:27)
+    at dynamicImportAndActivate (c:\Users\nisharu deen\.vscode\extensions\continue.continue-1.2.22-win32-x64\out\extension.js:897445:16)
+    at sb._activate (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:501:15965)
+    at sb._waitForDepsThenActivate (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:501:15907)
+    at sb._initialize (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:501:15274) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+log.ts:450  WARN Authentication provider continue was not declared in the Extension Manifest.
+warn @ log.ts:450
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.dart.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/dart/syntaxes/dart.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/dart-code.dart-code-3.132.0/syntaxes/dart.json
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.python.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/python/syntaxes/MagicPython.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/ms-python.vscode-pylance-2026.2.1/grammars/PylancePython.tmLanguage
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.java.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/java/syntaxes/java.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/redhat.java-1.53.0-win32-x64/language-support/java/java.tmLanguage.json
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.yaml.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/yaml/syntaxes/yaml.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/redhat.vscode-yaml-1.21.0/syntaxes/yaml.tmLanguage.json
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.cmake.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/ms-vscode.cmake-tools-1.22.28/syntaxes/CMake.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/twxs.cmake-0.0.17/syntaxes/CMake.tmLanguage
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.cmakecache.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/ms-vscode.cmake-tools-1.22.28/syntaxes/CMakeCache.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/twxs.cmake-0.0.17/syntaxes/CMakeCache.tmLanguage
+register @ TMScopeRegistry.ts:46
+TMScopeRegistry.ts:46 Overwriting grammar scope name to file mapping for scope source.groovy.
+Old grammar file: file:///c%3A/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/extensions/groovy/syntaxes/groovy.tmLanguage.json.
+New grammar file: file:///c%3A/Users/nisharu%20deen/.vscode/extensions/vscjava.vscode-gradle-3.17.2/syntaxes/groovy.tmLanguage.json
+register @ TMScopeRegistry.ts:46
+console.ts:139 [Extension Host] Gemini CodeAssist version 2.77.0 (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] No workspace folders found. (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] No workspace folders found. (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Handling content exclusion file changes and firing event... (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Reading AI content exclusion file: .aiexclude (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] No workspace folders found. (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase BuildContext starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Reading AI content exclusion file: .gitignore (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] No workspace folders found. (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Content exclusion file changes handled and event fired. (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] AIExcludeProvider initialized. (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase BuildContext finished in 10ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.Preactivate starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] [INFO] 2026-04-07T12:09:09.046Z - Translations initialized. (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [INFO] 2026-04-07T12:09:09.052Z - Extension activated! (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] WS Connection is open (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Attaching to WebviewView (viewType=qwen-code.chatView.sidebar) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Attempting to restore auth state and connection for view... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Attempting connection... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Starting initialization, workingDir: C:\Users\nisharu deen\AppData\Local\Programs\Microsoft VS Code (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Using CLI-managed authentication (autoAuth=false) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Connecting to agent... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] 🚀 CONNECT() CALLED - ID: 1775563751609 (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] Connecting to ACP process (attempt 1/3)... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [ACP] Spawning command: C:\Users\nisharu deen\AppData\Local\Programs\Microsoft VS Code\Code.exe c:\Users\nisharu deen\.vscode\extensions\qwenlm.qwen-code-vscode-ide-companion-0.14.2-win32-x64\dist\qwen-cli\cli.js --acp --channel=VSCode (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:12 [INFO]: Checking network connection... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+log.ts:450  WARN Authentication provider codeium_auth was not declared in the Extension Manifest.
+warn @ log.ts:450
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 (VSCode) 2026-04-07 17:39:12 [INFO]: Checking network connection...
+
+console.ts:139 [Extension Host] [ACP] Sending initialize request... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Startup phase Activate.Preactivate finished in 4504ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.StartExperimentation starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Activating plugin Gemini Code Assist (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Enabled the Gemini Code Assist context hint provider (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Activating plugin Local agent (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Activating plugin MCP Server (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.StartExperimentation.PluginActivate starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.StartExperimentation.PluginActivate.GlobalActivate starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Done activating plugin Local agent, took 8.145100000001548ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Done activating plugin MCP Server, took 9.586699999999837ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.StartExperimentation finished in 28ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Done activating plugin Gemini Code Assist, took 38.216999999996915ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.StartExperimentation.PluginActivate finished in 30ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.GcloudStateContext starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.GcloudStateContext finished in 6ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.CheckUpdate starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.CheckUpdate finished in 1ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.StartExperimentation.PluginActivate.GlobalActivate finished in 51ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.Postactivate starting (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate.Postactivate finished in 2ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Generating listings... (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Startup phase Activate finished in 4582ms (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] Extension activated (at file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584)
+console.ts:139 [Extension Host] [SUPERCOMPLETE ON TAB]: true (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Request succeeded (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Request closed (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:14 [ERROR]: Failed to log onboarding event: Not Found (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:14 [INFO]: Creating manager directory: C:\Users\NISHAR~1\AppData\Local\Temp\fe88e1af-2b89-45f0-a0e0-bf32d2580836\codeium\manager (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 (VSCode) 2026-04-07 17:39:14 [ERROR]: Failed to log onboarding event: Not Found
+(VSCode) 2026-04-07 17:39:14 [INFO]: Creating manager directory: C:\Users\NISHAR~1\AppData\Local\Temp\fe88e1af-2b89-45f0-a0e0-bf32d2580836\codeium\manager
+
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:15 [ERROR]: Failed to log onboarding event: Not Found (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 (VSCode) 2026-04-07 17:39:15 [ERROR]: Failed to log onboarding event: Not Found
+
+console.ts:139 [Extension Host] Request succeeded (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:15 [INFO]: No Network Issue connecting to https://server.codeium.com/healthz (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] Request closed (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 (VSCode) 2026-04-07 17:39:15 [INFO]: No Network Issue connecting to https://server.codeium.com/healthz
+
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:16 [INFO]: Using cached LS with valid crc32: c:\Users\nisharu deen\.vscode\extensions\codeium.codeium-1.48.2\dist\e03af6ebc40b844314d448f947c80b636d093049\language_server_windows_x64.exe (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:16 [INFO]: Language server started (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 (VSCode) 2026-04-07 17:39:16 [INFO]: Using cached LS with valid crc32: c:\Users\nisharu deen\.vscode\extensions\codeium.codeium-1.48.2\dist\e03af6ebc40b844314d448f947c80b636d093049\language_server_windows_x64.exe
+(VSCode) 2026-04-07 17:39:16 [INFO]: Language server started
+
+console.ts:139 [Extension Host] [ACP] Initialize successful (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [ACP] Initialization response: Object (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] ACP process connected successfully (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] no sessionRestored, Creating new session... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] Creating new session (letting CLI handle authentication)... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] Creating session (attempt 1/3)... (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [ACP] Sending session/new request with cwd: C:\Users\nisharu deen\AppData\Local\Programs\Microsoft VS Code (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [ACP] Session created with ID: 3e6b1f94-5688-4274-afee-e9c4f1b6ddd7 (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] Session created successfully (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] Extracted availableModels from session/new: Array(1) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] New session created successfully (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] 
+======================================== (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] ✅ CONNECT() COMPLETED SUCCESSFULLY (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] ========================================
+ (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [QwenAgentManager] Emitting availableModels from connect(): Array(1) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] onAvailableModels received, sending to webview: Array(1) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Agent connected successfully (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Initializing with new session (skipping restoration) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Existing ACP session detected, skipping new session creation (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [WebViewProvider] Initializing empty conversation (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+log.ts:450  WARN [mainThreadStorage] large extension state detected (extensionId: qwenlm.qwen-code-vscode-ide-companion, global: true): 2018.7109375kb. Consider to use 'storageUri' or 'globalStorageUri' to store this data on disk instead.
+warn @ log.ts:450
+console.ts:139 [Extension Host] [WebViewProvider] Empty conversation initialized: conv_1775563757653_1olmixrwp (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [ACP] >>> Processing session_update: {"sessionId":"3e6b1f94-5688-4274-afee-e9c4f1b6ddd7","update":{"availableCommands":[{"description":"Ask a quick side question without affecting the main conversation","input":null,"name":"btw"},{"description":"submit a bug report","input":null,"name":"bug"},{"description":"Compresses the context by r (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] [SessionUpdateHandler] Processing update type: available_commands_update (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:23 [INFO]: Found language server running on port 54922 (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 (VSCode) 2026-04-07 17:39:23 [INFO]: Found language server running on port 54922
+
+console.ts:139 [Extension Host] (VSCode) 2026-04-07 17:39:23 [INFO]: openAllTextDocuments took 5.6238999999986845ms (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+localProcessExtensionHost.ts:310 Extension Host
+localProcessExtensionHost.ts:311 (VSCode) 2026-04-07 17:39:23 [INFO]: openAllTextDocuments took 5.6238999999986845ms
+
+log.ts:460   ERR [Extension Host] [RevisionManager] Error reading tasks directory: Error: ENOENT: no such file or directory, scandir 'c:\Users\nisharu deen\AppData\Roaming\Code\User\globalStorage\blackboxapp.blackboxagent\tasks'
+    at readdir (node:internal/fs/promises:953:18)
+    at t.getAllRevisions (c:\Users\nisharu deen\.vscode\extensions\blackboxapp.blackboxagent-3.6.72\dist\extension.js:321:10318)
+    at t.cleanupOldRevisions (c:\Users\nisharu deen\.vscode\extensions\blackboxapp.blackboxagent-3.6.72\dist\extension.js:321:9584)
+error @ log.ts:460
+console.ts:139 [Extension Host] [RevisionManager] Error reading tasks directory: Error: ENOENT: no such file or directory, scandir 'c:\Users\nisharu deen\AppData\Roaming\Code\User\globalStorage\blackboxapp.blackboxagent\tasks'
+    at readdir (node:internal/fs/promises:953:18)
+    at t.getAllRevisions (c:\Users\nisharu deen\.vscode\extensions\blackboxapp.blackboxagent-3.6.72\dist\extension.js:321:10318)
+    at t.cleanupOldRevisions (c:\Users\nisharu deen\.vscode\extensions\blackboxapp.blackboxagent-3.6.72\dist\extension.js:321:9584) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+leo @ console.ts:139
+webviewCommands.ts:33 Using standard dev tools to debug iframe based webview
+   ERR [Extension Host] FetchError: Unleash Repository error: Response timeout while trying to fetch https://unleash.codeium.com/api/client/features (over 2000ms)
+    at Timeout.<anonymous> (c:\Users\nisharu deen\.vscode\extensions\codeium.codeium-1.48.2\dist\extension.js:2:4618823)
+    at listOnTimeout (node:internal/timers:585:17)
+    at processTimers (node:internal/timers:521:7)
+error @ workbench.desktop.main.js:414
+error @ workbench.desktop.main.js:414
+error @ workbench.desktop.main.js:5000
+deo @ workbench.desktop.main.js:962
+$logExtensionHostMessage @ workbench.desktop.main.js:962
+_doInvokeHandler @ workbench.desktop.main.js:5041
+_invokeHandler @ workbench.desktop.main.js:5041
+_receiveRequest @ workbench.desktop.main.js:5041
+_receiveOneMessage @ workbench.desktop.main.js:5041
+(anonymous) @ workbench.desktop.main.js:5041
+_deliver @ workbench.desktop.main.js:405
+fire @ workbench.desktop.main.js:405
+fire @ workbench.desktop.main.js:996
+(anonymous) @ workbench.desktop.main.js:5056
+ [Extension Host] FetchError: Unleash Repository error: Response timeout while trying to fetch https://unleash.codeium.com/api/client/features (over 2000ms)
+    at Timeout.<anonymous> (c:\Users\nisharu deen\.vscode\extensions\codeium.codeium-1.48.2\dist\extension.js:2:4618823)
+    at listOnTimeout (node:internal/timers:585:17)
+    at processTimers (node:internal/timers:521:7) (at console.<anonymous> (file:///c:/Users/nisharu%20deen/AppData/Local/Programs/Microsoft%20VS%20Code/cfbea10c5f/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:611:33584))
+leo @ workbench.desktop.main.js:962
+$logExtensionHostMessage @ workbench.desktop.main.js:962
+_doInvokeHandler @ workbench.desktop.main.js:5041
+_invokeHandler @ workbench.desktop.main.js:5041
+_receiveRequest @ workbench.desktop.main.js:5041
+_receiveOneMessage @ workbench.desktop.main.js:5041
+(anonymous) @ workbench.desktop.main.js:5041
+_deliver @ workbench.desktop.main.js:405
+fire @ workbench.desktop.main.js:405
+fire @ workbench.desktop.main.js:996
+(anonymous) @ workbench.desktop.main.js:5056
