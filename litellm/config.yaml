@@ -5,37 +5,37 @@ model_list:
   - model_name: "gemma-local-fast"
     litellm_params:
       model: "ollama/gemma:2b"
-      api_base: "https://missouri-risks-handy-unity.trycloudflare.com"
+      api_base: "https://epa-airline-boutique-elections.trycloudflare.com"
       timeout: 60
 
   - model_name: "qwen-coder-win"
     litellm_params:
       model: "ollama/qwen2.5-coder:7b"
-      api_base: "https://missouri-risks-handy-unity.trycloudflare.com"
+      api_base: "https://epa-airline-boutique-elections.trycloudflare.com"
       timeout: 120
 
   - model_name: "deepseek-r1-8b"
     litellm_params:
       model: "ollama/deepseek-r1:8b"
-      api_base: "https://missouri-risks-handy-unity.trycloudflare.com"
+      api_base: "https://epa-airline-boutique-elections.trycloudflare.com"
       timeout: 180
 
   - model_name: "kairos-r1-14b"
     litellm_params:
       model: "ollama/kairos-r1-14b:latest"
-      api_base: "https://missouri-risks-handy-unity.trycloudflare.com"
+      api_base: "https://epa-airline-boutique-elections.trycloudflare.com"
       timeout: 300
 
   - model_name: "360-light"
     litellm_params:
       model: "ollama/360-light-local:latest"
-      api_base: "https://missouri-risks-handy-unity.trycloudflare.com"
+      api_base: "https://epa-airline-boutique-elections.trycloudflare.com"
       timeout: 300
 
   - model_name: "kairos-coder"
     litellm_params:
       model: "ollama/fervent_mcclintock/KwaiCoder-DS-V2-Lite-Base:Q4_K_M"
-      api_base: "https://missouri-risks-handy-unity.trycloudflare.com"
+      api_base: "https://epa-airline-boutique-elections.trycloudflare.com"
       timeout: 300
 
   # ── CLOUD FALLBACK ────────────────────────────────
@@ -63,5 +63,6 @@ general_settings:
 
 litellm_settings:
   drop_params: true
+
 
 
