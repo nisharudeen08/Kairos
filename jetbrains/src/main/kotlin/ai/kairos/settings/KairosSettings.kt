@@ -12,8 +12,8 @@ import com.intellij.openapi.components.Storage
 class KairosSettings : PersistentStateComponent<KairosSettings.State> {
 
   data class State(
-    var proxyUrl: String = "http://localhost:4000",
-    var apiKey: String = "kairos-local",
+    var proxyUrl: String = "https://kairos-litellm.onrender.com",
+    var apiKey: String = "sk-KAIROS",
     var selectedModel: String = "gpt-oss-20b",
     var streamingEnabled: Boolean = true
   )

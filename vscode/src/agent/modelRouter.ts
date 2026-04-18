@@ -11,7 +11,7 @@ export const MODEL_LOCATIONS: Record<string, string> = {
   "kairos-r1-14b":      "windows",
   "360-light":          "windows",
   "kairos-coder":       "windows",
-  "qwen-coder-ubuntu":  "ubuntu",   // helper only
+  // "qwen-coder-ubuntu":  "ubuntu",   // DISABLED pending tunnel
   "openrouter-mistral": "cloud",
   "github-gpt4o":       "cloud"
 };

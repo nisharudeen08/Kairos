@@ -1,7 +1,7 @@
 import { MODELS, ModelAlias } from './models';
 import { logger } from '../utils/logger';
 export const LITELLM_BASE_URL = process.env.LITELLM_PROXY_URL ?? "https://kairos-litellm.onrender.com";
-export const LITELLM_KEY = "sk-KAIROS"; // Should ideally come from config, but using hardcoded master key for now per instructions
+export const LITELLM_KEY = process.env.LITELLM_API_KEY ?? "sk-KAIROS"; 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
     content: string | Array<{ type: 'text', text: string } | { type: 'image_url', image_url: { url: string } }>;

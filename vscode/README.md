@@ -38,7 +38,7 @@ pip install litellm
 litellm --config litellm/config.yaml --port 4000
 ```
 
-Verify it's running: `curl http://localhost:4000/health`
+Verify it's running: `curl https://kairos-litellm.onrender.com/health`
 
 ### Deploy LiteLLM on Render
 
@@ -67,7 +67,7 @@ Then press `F5` in VS Code to launch the Extension Development Host.
 
 | Setting | Default | Description |
 |---|---|---|
-| `kairos.litellmBaseUrl` | `http://localhost:4000` or `https://your-service.onrender.com` | LiteLLM proxy URL |
+| `kairos.litellmBaseUrl` | `https://kairos-litellm.onrender.com` or `https://your-service.onrender.com` | LiteLLM proxy URL |
 | `kairos.litellmApiKey` | `sk-KAIROS` | Proxy master key |
 | `kairos.defaultModel` | `gpt-oss-120b` | Default model alias |
 | `kairos.maxContextLines` | `200` | Max file lines to send |
@@ -149,3 +149,4 @@ npm run watch          # Watch mode (tsc)
 ```
 
 Logs appear in: **Output panel → Antigravity AI**
+
