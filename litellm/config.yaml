@@ -69,6 +69,7 @@ router_settings:
     - "github-gpt4o"
 
 general_settings:
+  master_key: "sk-KAIROS"
   max_parallel_requests: 1
 
 litellm_settings:
