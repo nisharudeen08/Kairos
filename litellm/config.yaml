@@ -1,5 +1,10 @@
 model_list:
 
+  - model_name: "test-ping-model"
+    litellm_params:
+      model: "ollama/gemma:2b"
+      api_base: "https://conscious-victoria-behavioral-larger.trycloudflare.com"
+
   # ── ALL ON WINDOWS via Cloudflare Tunnel ──────────
 
   - model_name: "gemma-local-fast"
