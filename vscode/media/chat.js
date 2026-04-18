@@ -1,8 +1,13 @@
-// @ts-check
-/// <reference lib="dom" />
-
-// @ts-ignore
-const vscode = acquireVsCodeApi();
+let vscode;
+try {
+  vscode = acquireVsCodeApi();
+} catch (e) {
+  // Already acquired or environment issue
+  vscode = /** @type {any} */ (window).vscodeApi;
+}
+if (vscode) {
+  /** @type {any} */ (window).vscodeApi = vscode;
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -123,26 +128,89 @@ const modelDropdown       = document.getElementById('model-dropdown');
 const modeList            = document.getElementById('mode-list');
 const modelList           = document.getElementById('model-list');
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-
-buildDropdowns();
-syncControls();
-renderEmptyState();   // show prompt chips until first message arrives
-if (inputEl) inputEl.focus();
-
 // Tell the extension host we're mounted — it will replay current session history
-vscode.postMessage({ type: 'ready' });
+if (vscode) vscode.postMessage({ type: 'ready' });
 
 // ─── Send / Stop ──────────────────────────────────────────────────────────────
 
-sendBtn?.addEventListener('click', handleSend);
+// ─── Button Listeners (Delegated) ─────────────────────────────────────────────
 
-stopBtn?.addEventListener('click', () => {
-  if (streamAbortController) {
-    streamAbortController.abort();
-    streamAbortController = null;
+document.addEventListener('click', (e) => {
+  const target = /** @type {HTMLElement} */ (e.target);
+
+  // 1. Selector Buttons
+  const targetModeBtn = target.closest('#mode-selector-btn');
+  if (targetModeBtn) {
+    e.stopPropagation();
+    const mDrop = modeDropdown || document.getElementById('mode-dropdown');
+    const lDrop = modelDropdown || document.getElementById('model-dropdown');
+    mDrop?.classList.toggle('hidden');
+    lDrop?.classList.add('hidden');
+    return;
   }
-  handleDone(true);
+
+  const targetModelBtn = target.closest('#model-selector-btn');
+  if (targetModelBtn) {
+    e.stopPropagation();
+    const mDrop = modeDropdown || document.getElementById('mode-dropdown');
+    const lDrop = modelDropdown || document.getElementById('model-dropdown');
+    lDrop?.classList.toggle('hidden');
+    mDrop?.classList.add('hidden');
+    return;
+  }
+
+  const targetReasoningBtn = target.closest('#reasoning-selector-btn');
+  if (targetReasoningBtn) {
+    currentReasoningLevel = (currentReasoningLevel % 3) + 1;
+    syncControls();
+    updateTokenEstimate();
+    return;
+  }
+
+  // 2. Main Action Buttons
+  if (target.closest('#btn-send'))     { handleSend(); return; }
+  if (target.closest('#btn-stop'))     { if (streamAbortController) { streamAbortController.abort(); streamAbortController = null; } handleDone(true); return; }
+  if (target.closest('#btn-clear'))    { if (vscode) { vscode.postMessage({ type: 'clearChat' }); } else { appendSystemMessage('❌ Error: VS Code API not found. Please reload.'); } return; }
+  if (target.closest('#btn-settings')) { if (vscode) vscode.postMessage({ type: 'openSettings' }); return; }
+  if (target.closest('#btn-new-chat')) { if (vscode) vscode.postMessage({ type: 'clearChat' }); appendSystemMessage('✨ New conversation started.'); return; }
+  
+  // 3. Navigation / Panel Buttons
+  if (target.closest('#btn-history')) {
+    historySidebar?.classList.add('open');
+    if (vscode) vscode.postMessage({ type: 'getHistory' });
+    return;
+  }
+  if (target.closest('#btn-close-history')) { historySidebar?.classList.remove('open'); return; }
+  
+  // 4. Action Bar
+  if (target.closest('#btn-changes'))  { if (vscode) vscode.postMessage({ type: 'openChanges' }); appendSystemMessage('📂 Opening Source Control...'); return; }
+  if (target.closest('#btn-terminal')) { if (vscode) vscode.postMessage({ type: 'openTerminal' }); appendSystemMessage('💻 Toggling terminal...'); return; }
+  if (target.closest('#btn-artifacts')){ if (vscode) vscode.postMessage({ type: 'openArtifacts' }); appendSystemMessage('📁 Opening Explorer...'); return; }
+  if (target.closest('#btn-web'))      { if (vscode) vscode.postMessage({ type: 'openWeb' }); appendSystemMessage('🌐 Opening browser...'); return; }
+  if (target.closest('#btn-review-changes')) { if (vscode) vscode.postMessage({ type: 'reviewChanges' }); appendSystemMessage('🔍 Opening Review Changes...'); return; }
+
+  // 5. Uploads
+  if (target.closest('#btn-file-upload'))  { fileInput?.click(); return; }
+  if (target.closest('#btn-image-upload')) { imageInput?.click(); return; }
+
+  // 6. Inline Message Buttons (Copy etc)
+  const copyMsgBtn = target.closest('.copy-msg-btn');
+  if (copyMsgBtn) {
+    // handled in createCopyMessageButton
+    return;
+  }
+});
+
+// ─── Input Handlers ───────────────────────────────────────────────────────────
+
+// Auto-grow textarea + token estimate
+inputEl?.addEventListener('input', () => {
+  const el = inputEl || /** @type {HTMLTextAreaElement} */ (document.getElementById('user-input'));
+  if (el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+  }
+  updateTokenEstimate();
 });
 
 inputEl?.addEventListener('keydown', (e) => {
@@ -152,11 +220,20 @@ inputEl?.addEventListener('keydown', (e) => {
   }
 });
 
-// Auto-grow textarea + token estimate
-inputEl?.addEventListener('input', () => {
-  inputEl.style.height = 'auto';
-  inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + 'px';
-  updateTokenEstimate();
+// Added a separate delegation for the case where inputEl was null at start
+document.addEventListener('input', (e) => {
+  const target = /** @type {HTMLElement} */ (e.target);
+  if (target.id === 'user-input') {
+    target.style.height = 'auto';
+    target.style.height = Math.min(target.scrollHeight, 180) + 'px';
+    updateTokenEstimate();
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey && (/** @type {HTMLElement} */ (e.target).id === 'user-input')) {
+    e.preventDefault();
+    handleSend();
+  }
 });
 
 // ─── Top-bar & controls ───────────────────────────────────────────────────────
@@ -219,33 +296,17 @@ reviewChangesBtn?.addEventListener('click', () => {
 
 // ─── Dropdowns ────────────────────────────────────────────────────────────────
 
-// BUG-FIX 1: a single 'click' listener per button — no duplicates
-modeBtn?.addEventListener('click', (e) => {
-  e.stopPropagation();
-  modeDropdown?.classList.toggle('hidden');
-  modelDropdown?.classList.add('hidden');
-});
-
-modelBtn?.addEventListener('click', (e) => {
-  e.stopPropagation();
-  modelDropdown?.classList.toggle('hidden');
-  modeDropdown?.classList.add('hidden');
-});
-
-// BUG-FIX 4: reasoning cycles through levels — also updates model hint label
-reasoningBtn?.addEventListener('click', () => {
-  currentReasoningLevel = (currentReasoningLevel % 3) + 1;
-  syncControls();
-  updateTokenEstimate();
-});
+// Handled by document level delegation
 
 // BUG-FIX 1 cont.: single event delegation per list — no duplicates
 modeList?.addEventListener('click', (e) => {
+  e.stopPropagation();
   const item = /** @type {HTMLElement} */ (e.target)?.closest('[data-index]');
   if (item) setMode(parseInt(item.getAttribute('data-index') || '0', 10));
 });
 
 modelList?.addEventListener('click', (e) => {
+  e.stopPropagation();
   const item = /** @type {HTMLElement} */ (e.target)?.closest('[data-index]');
   if (item) setModel(parseInt(item.getAttribute('data-index') || '0', 10));
 });
@@ -256,10 +317,24 @@ document.addEventListener('click', () => {
   modelDropdown?.classList.add('hidden');
 });
 
+// Event delegation for hint chips and other dynamic elements
+document.addEventListener('click', (e) => {
+  const target = /** @type {HTMLElement} */ (e.target);
+  
+  // Hint chips
+  const hintChip = target.closest('.hint-chip');
+  if (hintChip) {
+    const text = hintChip.querySelector('span:not(.material-symbols-outlined)')?.textContent;
+    if (text) fillInput(text);
+    return;
+  }
+});
+
 // ─── VS Code message bus ──────────────────────────────────────────────────────
 
 window.addEventListener('message', (event) => {
   const msg = event.data;
+  if (!vscode) return;
   switch (msg.type) {
     case 'token':           handleToken(msg.content); break;
     case 'done':            handleDone(false, msg.metadata); break;
@@ -349,7 +424,7 @@ function syncControls() {
     const iconEl = modeBtn.querySelector('.material-symbols-outlined');
     if (iconEl) iconEl.textContent = mode.icon;
     modeBtn.className =
-      `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer ` +
+      `selector-pill flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer ` +
       `transition-all uppercase tracking-wider border ${colorMap[mode.color] || colorMap.indigo}`;
   }
 
@@ -368,6 +443,13 @@ function syncControls() {
     el.classList.toggle('bg-white/5', i === currentModelIndex);
     el.classList.toggle('text-primary', i === currentModelIndex);
   });
+
+  // Highlight active mode in dropdown
+  const modeItems = modeList?.querySelectorAll('[data-index]');
+  modeItems?.forEach((el, i) => {
+    el.classList.toggle('bg-white/5', i === currentModeIndex);
+    el.classList.toggle('text-primary', i === currentModeIndex);
+  });
 }
 
 // ─── Token estimate ───────────────────────────────────────────────────────────
@@ -381,30 +463,42 @@ function updateTokenEstimate() {
 // ─── Sending ──────────────────────────────────────────────────────────────────
 
 function handleSend() {
-  if (!inputEl) return;
-  const text = inputEl.value.trim();
+  const input = inputEl || /** @type {HTMLTextAreaElement} */ (document.getElementById('user-input'));
+  if (!input) return;
+  const text = input.value.trim();
   if (!text || isStreaming) return;
 
   removeEmptyState();
   appendUserMessage(text);
 
-  inputEl.value = '';
-  inputEl.style.height = 'auto';
-  if (tokenCounterEl) tokenCounterEl.textContent = '';
+  input.value = '';
+  input.style.height = 'auto';
+  const tokens = tokenCounterEl || document.getElementById('token-counter');
+  if (tokens) tokens.textContent = '';
 
   streamAbortController = new AbortController();
   beginStream();
 
-  vscode.postMessage({
-    type: 'userMessage',
-    text,
-    mode:           modeOptions[currentModeIndex].value,
-    model:          modelOptions[currentModelIndex].value,
-    reasoningLevel: currentReasoningLevel,
-    images:         pendingImages,
-  });
-
-  pendingImages = [];
+  if (vscode) {
+    try {
+      vscode.postMessage({
+        type: 'userMessage',
+        text,
+        mode:           modeOptions[currentModeIndex].value,
+        model:          modelOptions[currentModelIndex].value,
+        reasoningLevel: currentReasoningLevel,
+        images:         pendingImages,
+      });
+      pendingImages = [];
+    } catch (err) {
+      console.error('Failed to post message', err);
+      handleDone(true); // reset UI state
+      appendSystemMessage('❌ Failed to communicate with extension. Please reload window.');
+    }
+  } else {
+    handleDone(true);
+    appendSystemMessage('❌ VS Code API not acquired. Please reload window.');
+  }
 }
 
 // ─── Stream lifecycle ─────────────────────────────────────────────────────────
@@ -488,7 +582,7 @@ function handleDone(aborted = false, metadata = null) {
   }
 
   if (aborted) {
-    appendSystemMessage('⏹️ Generation stopped.');
+    appendSystemMessage('Generation stopped.');
   } else if (metadata) {
     appendAgentMeta(metadata);
   }
@@ -709,8 +803,7 @@ function renderMarkdown(text) {
   safe = safe.replace(/🧠 Agent:.*?(\n|$)/g, '');
   safe = safe.replace(/⚙️\s*Model:.*?(\n|$)/g, '');
   safe = safe.replace(/🔒 Confidence:.*?(\n|$)/g, '');
-  safe = safe.replace(/📋 Plan \/ Solution:/g,
-    '<div class="kairos-plan-divider">📋 Plan / Solution</div>');
+    '<div class="kairos-plan-divider">Plan / Solution</div>');
 
   // Headers
   safe = safe.replace(/^### (.+)$/gm, '<h3 class="md-h3">$1</h3>');
@@ -745,7 +838,7 @@ function renderMarkdown(text) {
   // Bold risk/warning lines
   safe = safe.replace(
     /^⚠\s*(.+)$/gm,
-    '<div class="md-warning">⚠️ $1</div>'
+    '<div class="md-warning">$1</div>'
   );
 
   // Paragraphs — double newlines
@@ -844,8 +937,7 @@ function renderEmptyState() {
         ${hints.map(h => `
           <button class="hint-chip group flex items-center gap-3 p-2.5 rounded-xl
                          bg-white/3 border border-white/5 text-left
-                         hover:bg-white/6 hover:border-primary/20 transition-all"
-                  onclick="fillInput(${JSON.stringify(h.text)})">
+                         hover:bg-white/6 hover:border-primary/20 transition-all">
             <span class="material-symbols-outlined text-sm text-slate-600
                          group-hover:text-primary transition-colors">${h.icon}</span>
             <span class="text-[11px] text-slate-400 group-hover:text-slate-200">${h.text}</span>
@@ -1054,15 +1146,15 @@ function scrollToBottom() {
  */
 function showPermissionDialog(scope, detail) {
   removeEmptyState();
-  const icon   = scope === 'terminal' ? '💻' : '📝';
+  const icon   = scope === 'terminal' ? 'terminal' : 'edit_document';
   const title  = scope === 'terminal' ? 'Terminal Access' : 'File Write Access';
   const wrapper = createEl('div', 'flex justify-start w-full py-1 permission-dialog');
   wrapper.innerHTML = `
-    <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);
                 border-radius:12px;padding:12px 14px;max-width:92%;width:100%;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span style="font-size:16px;">${icon}</span>
-        <span style="font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:0.06em;">${title}</span>
+        <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary);">${icon}</span>
+        <span style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;">${title}</span>
       </div>
       <div style="font-size:11px;color:#cbd5e1;margin-bottom:10px;font-family:monospace;
                   background:rgba(0,0,0,0.2);padding:6px 8px;border-radius:6px;word-break:break-all;">
@@ -1091,7 +1183,7 @@ function showPermissionDialog(scope, detail) {
       const level = /** @type {HTMLElement} */ (btn).getAttribute('data-perm');
       wrapper.remove();
       if (level === 'deny') {
-        appendSystemMessage('⛔ Permission denied.');
+        appendSystemMessage('Permission denied.');
         return;
       }
       vscode.postMessage({
@@ -1100,11 +1192,21 @@ function showPermissionDialog(scope, detail) {
         level: level === 'session' ? 'session' : 'once',
       });
       appendSystemMessage(level === 'session'
-        ? `✅ ${title} granted for this session.`
-        : `✅ ${title} granted once.`);
+        ? `Permission granted for this session.`
+        : `Permission granted once.`);
     });
   });
 
   messagesEl.appendChild(wrapper);
   scrollToBottom();
 }
+
+// ─── Final Init ───────────────────────────────────────────────────────────────
+// Called at the end of the file to ensure all functions are defined
+buildDropdowns();
+syncControls();
+renderEmptyState();   // show prompt chips until first message arrives
+if (inputEl) inputEl.focus();
+
+// Visual diagnostic: if you see this pill, the JavaScript has successfully initialized.
+appendSystemMessage('🛡️ Kairos UI Security Layer Active');

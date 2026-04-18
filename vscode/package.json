@@ -9,6 +9,17 @@
   "keywords": ["ai", "llm", "copilot", "agent", "litellm"],
   "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In untrusted workspaces, file write and terminal execution are disabled. Read-only mode is available.",
+      "restrictedConfigurations": [
+        "kairos.enableTerminal",
+        "kairos.enableFileWrite",
+        "kairos.enableFullAccess"
+      ]
+    }
+  },
   "contributes": {
     "commands": [
       {
@@ -129,48 +140,54 @@
           "type": "string",
           "default": "gpt-oss-120b",
           "enum": [
-            "gpt-oss-120b",
             "qwen3-coder",
             "llama-3.3-70b",
-            "hermes-405b",
-            "gemma-3-27b",
+            "hermes-3-405b",
+            "gpt-oss-120b",
             "gpt-oss-20b",
+            "gemma-3-27b",
+            "gemma-4-31b",
             "qwen3-next-80b",
-            "qwen3-6-plus",
-            "nemotron-30b",
-            "gemma-3-12b",
-            "stepfun-flash",
-            "glm-4-5-air",
-            "dolphin-mistral-24b",
-            "gemma-3-4b",
-            "gemma-3n-e4b",
+            "nemotron-3-super",
+            "step-3.5-flash",
             "nemotron-nano-9b",
-            "nemotron-embed-vl",
-            "lfm-thinking",
-            "lfm-instruct",
-            "llama-3.2-3b"
+            "arcee-trinity-mini",
+            "dolphin-mistral-24b",
+            "lfm-2.5-1.2b-thinking",
+            "nemotron-nano-12b-vl",
+            "gemma-4-26b-vision",
+            "groq-llama-3.3-70b",
+            "groq-qwen-qwq-32b",
+            "codestral",
+            "gemini-2.5-pro",
+            "github-deepseek-r1",
+            "deepseek-local-fast",
+            "deepseek-local-quality"
           ],
           "enumDescriptions": [
-            "GPT OSS 120B (Best Flagship)",
-            "Qwen 3 Coder (Best for Coding)",
-            "Llama 3.3 70B (State-of-the-art Meta)",
-            "Hermes 3 405B (Largest Open Source)",
-            "Gemma 3 27B (Google Flagship)",
-            "GPT OSS 20B (Balanced)",
-            "Qwen 3 Next 80B (Balanced)",
-            "Qwen 3.6 Plus (Balanced)",
-            "Nemotron 30B (NVIDIA)",
-            "Gemma 3 12B (Balanced)",
-            "StepFun 3.5 Flash (Fast)",
-            "GLM 4.5 Air (Fast)",
-            "Dolphin Mistral 24B (Creative)",
-            "Gemma 3 4B (Ultra-fast)",
-            "Gemma 3n E4B (Efficient)",
-            "Nemotron Nano 9B (Specialty)",
-            "Nemotron Embed VL (Vision)",
-            "LFM 2.5 Thinking (Deep Reason)",
-            "LFM 2.5 Instruct (Specialty)",
-            "Llama 3.2 3B (Edge)"
+            "[OpenRouter] Qwen 3 Coder 480B (Best for Coding)",
+            "[OpenRouter] Llama 3.3 70B (State-of-the-art Meta)",
+            "[OpenRouter] Hermes 3 405B (Largest Open Source)",
+            "[OpenRouter] GPT-OSS 120B (Best Flagship)",
+            "[OpenRouter] GPT-OSS 20B (Balanced)",
+            "[OpenRouter] Gemma 3 27B (Google Flagship)",
+            "[OpenRouter] Gemma 4 31B (Google Flagship)",
+            "[OpenRouter] Qwen 3 Next 80B (Balanced)",
+            "[OpenRouter] Nemotron 3 Super 120B (Coding)",
+            "[OpenRouter] Step 3.5 Flash (Fast AutoComplete)",
+            "[OpenRouter] Nemotron Nano 9B (Fast AutoComplete)",
+            "[OpenRouter] Arcee Trinity Mini (Fast)",
+            "[OpenRouter] Dolphin Mistral 24B (Creative)",
+            "[OpenRouter] LFM 2.5 1.2B Thinking (Deep Reason)",
+            "[OpenRouter] Nemotron Nano 12B VL (Vision)",
+            "[OpenRouter] Gemma 4 26B Vision (Vision)",
+            "[Groq] Llama 3.3 70B (Ultra-fast)",
+            "[Groq] Qwen QwQ 32B (Ultra-fast Logic)",
+            "[Mistral] Codestral (Coding)",
+            "[Gemini] Gemini 2.5 Pro (Large Context)",
+            "[GitHub] DeepSeek R1 (Deep Reason)",
+            "[Local] KAIROS R1 8B (Fast / 6GB VRAM)",
+            "[Local] KAIROS R1 14B (Quality / 16GB+ RAM)"
           ],
           "description": "Default model for general tasks",
           "order": 3
@@ -195,6 +212,24 @@
           "default": 120000,
           "description": "Timeout (ms) for model family auto-selection",
           "order": 6
+        },
+        "kairos.enableTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow Kairos agent to run terminal commands via <execute> tags.",
+          "order": 7
+        },
+        "kairos.enableFileWrite": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow Kairos agent to write files via <write> tags.",
+          "order": 8
+        },
+        "kairos.enableFullAccess": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable full access mode — agent can read, write, and execute without per-action approval.",
+          "order": 9
         }
       }
     }

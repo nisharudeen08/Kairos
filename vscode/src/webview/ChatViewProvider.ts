@@ -399,11 +399,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; script-src 'nonce-${nonce}' ${webview.cspSource} https://cdn.tailwindcss.com 'unsafe-inline'; font-src ${webview.cspSource} https://fonts.gstatic.com; img-src ${webview.cspSource} https: data:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline'; img-src * data: blob:; font-src * data: blob:;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script nonce="${nonce}" src="https://cdn.tailwindcss.com"></script>
   <script nonce="${nonce}">
     tailwind.config = {
       darkMode: 'class',
@@ -411,10 +411,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     };
   </script>
   <link rel="stylesheet" href="${cssUri}">
-  <style>:root { color-scheme: dark; }</style>
+  <style>
+    :root { color-scheme: dark; }
+    #model-list { max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+    #model-list::-webkit-scrollbar { width: 4px; }
+    #model-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+  </style>
 </head>
-<body>
-<div id="app">
+<body class="bg-[#0b0c14] text-slate-200 overflow-hidden selection:bg-primary/20">
+<div id="app" class="flex flex-col h-screen border-2 border-red-500">
+  <div style="background:red; color:white; padding:2px; font-size:10px; text-align:center;">HOST ACTIVE v2</div>
   <!-- History Sidebar -->
   <div id="history-sidebar">
     <div class="history-header">
@@ -537,7 +543,199 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   </div>
 
 </div>
-  <script nonce="${nonce}" src="${jsUri}"></script>
+  <script>
+    const vscode = acquireVsCodeApi();
+    let streamBuffer = '';
+    let streamTarget = null;
+    let currentMode = 'agent';
+    let currentModel = 'auto';
+    
+    // Core Data
+    const modeOptions = [
+      { value: 'agent', label: 'Agent', icon: 'smart_toy', color: 'rose' },
+      { value: 'agent-full', label: 'Agent (Full)', icon: 'terminal', color: 'rose' },
+      { value: 'fast', label: 'Fast', icon: 'bolt', color: 'indigo' },
+      { value: 'ask', label: 'Ask', icon: 'help_outline', color: 'emerald' },
+      { value: 'plan', label: 'Plan', icon: 'architecture', color: 'amber' },
+      { value: 'local', label: 'Local', icon: 'home', color: 'violet' },
+    ];
+
+    const modelOptions = [
+      { value: "auto", label: "Auto (AI picks)", provider: "Auto" },
+      // OLLAMA (Local)
+      { value: "kwaicoder-local", label: "KwaiCoder 16B", provider: "Ollama" },
+      { value: "360-light-local", label: "360 LightR1 14B", provider: "Ollama" },
+      { value: "deepseek-local-quality", label: "KAIROS R1 14B", provider: "Ollama" },
+      { value: "deepseek-local-fast", label: "KAIROS R1 8B", provider: "Ollama" },
+      { value: "qwen-local", label: "Qwen 2.5 Coder 7B", provider: "Ollama" },
+      // MISTRAL (New)
+      { value: "mistral-small", label: "Mistral Small", provider: "Mistral" },
+      { value: "codestral", label: "Mistral Codestral", provider: "Mistral" },
+      // OPENROUTER (Flagship)
+      { value: "qwen3-coder", label: "Qwen 3 Coder 480B", provider: "OpenRouter" },
+      { value: "llama-3.3-70b", label: "Llama 3.3 70B", provider: "OpenRouter" },
+      { value: "hermes-3-405b", label: "Hermes 3 405B", provider: "OpenRouter" },
+      { value: "gpt-oss-120b", label: "GPT OSS 120B", provider: "OpenRouter" },
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "Gemini" },
+      { value: "github-deepseek-r1", label: "DeepSeek R1", provider: "GitHub" },
+      // GROQ (Fast)
+      { value: "groq-llama-3.3-70b", label: "⚡ Llama 3.3 70B", provider: "Groq" },
+      { value: "groq-qwen-qwq-32b", label: "⚡ Qwen QwQ 32B", provider: "Groq" },
+    ];
+
+    function buildDropdowns() {
+      const modeList = document.getElementById('mode-list');
+      const modelList = document.getElementById('model-list');
+      if (modeList) {
+        modeList.innerHTML = modeOptions.map((opt, i) => \`
+          <div data-index="\${i}" class="flex items-center gap-2 px-3 py-2 hover:bg-white/5 cursor-pointer rounded-lg text-[11px]">
+            <span class="material-symbols-outlined text-sm text-\${opt.color}-400">\${opt.icon}</span>
+            <div class="font-semibold text-slate-300">\${opt.label}</div>
+          </div>
+        \`).join('');
+      }
+      if (modelList) {
+        const providers = [...new Set(modelOptions.map(m => m.provider))];
+        modelList.innerHTML = providers.map(p => \`
+          <div class="px-2 pt-2 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-slate-600 border-b border-white/5 mb-1">── \${p} ──</div>
+          \${modelOptions.filter(m => m.provider === p).map(opt => {
+            const idx = modelOptions.findIndex(m => m.value === opt.value);
+            return \`
+              <div data-index="\${idx}" class="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 cursor-pointer rounded-lg text-[11px] text-slate-300">
+                \${opt.label}
+              </div>
+            \`;
+          }).join('')}
+        \`).join('');
+      }
+    }
+
+    function appendUserMessage(text) {
+      const msgEl = document.getElementById('messages');
+      if (!msgEl) return;
+      document.getElementById('welcome-state')?.remove();
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex flex-col items-end w-full gap-1 mb-4';
+      const bubble = document.createElement('div');
+      bubble.className = 'px-4 py-3 rounded-2xl bg-violet-600/90 text-white text-[13px] max-w-[85%] border border-violet-500/30 shadow-lg shadow-violet-900/10';
+      bubble.textContent = text;
+      wrapper.appendChild(bubble);
+      msgEl.appendChild(wrapper);
+      msgEl.scrollTop = msgEl.scrollHeight;
+      prepareStream();
+    }
+
+    function prepareStream() {
+      const msgEl = document.getElementById('messages');
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex flex-col items-start w-full gap-1 mb-4';
+      const bubble = document.createElement('div');
+      bubble.className = 'px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-slate-300 text-[13px] w-full relative group animate-in fade-in slide-in-from-left-2 duration-300';
+      streamTarget = document.createElement('div');
+      streamTarget.className = 'prose-content whitespace-pre-wrap';
+      streamTarget.innerHTML = '<div class="flex items-center gap-2 text-slate-500 italic"><span class="animate-spin text-[10px] material-symbols-outlined">settings</span> Thinking...</div>';
+      bubble.appendChild(streamTarget);
+      wrapper.appendChild(bubble);
+      msgEl.appendChild(wrapper);
+      streamBuffer = '';
+    }
+
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      switch (msg.type) {
+        case 'token':
+          if (streamTarget) {
+            if (streamBuffer === '') streamTarget.innerHTML = '';
+            streamBuffer += msg.content;
+            streamTarget.textContent = streamBuffer;
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+          }
+          break;
+        case 'done':
+          streamBuffer = '';
+          streamTarget = null;
+          break;
+        case 'replayUser':
+          appendUserMessage(msg.text); // Note: this will also trigger "Thinking..."
+          break;
+        case 'error':
+          if (streamTarget) streamTarget.innerHTML = '<div class="flex items-center gap-2 text-red-400 font-mono text-[11px] bg-red-400/10 p-2 rounded-lg border border-red-400/20"><span class="material-symbols-outlined text-sm">error</span> Error: ' + msg.message + '</div>';
+          break;
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      
+      // Sidebar toggle
+      if (target.closest('#btn-history')) {
+        document.getElementById('history-sidebar')?.classList.toggle('active');
+        return;
+      }
+      // New Chat
+      if (target.closest('#btn-new-chat')) {
+        vscode.postMessage({ type: 'clearChat' });
+        document.getElementById('messages').innerHTML = ''; // local clear
+        return;
+      }
+
+      if (target.closest('#mode-selector-btn')) {
+        document.getElementById('mode-dropdown')?.classList.toggle('hidden');
+        document.getElementById('model-dropdown')?.classList.add('hidden');
+        return;
+      }
+      if (target.closest('#model-selector-btn')) {
+        document.getElementById('model-dropdown')?.classList.toggle('hidden');
+        document.getElementById('mode-dropdown')?.classList.add('hidden');
+        return;
+      }
+      const item = target.closest('[data-index]');
+      if (item) {
+        const idx = item.getAttribute('data-index');
+        const list = item.parentElement.closest('#mode-list, #model-list');
+        if (list && list.id === 'mode-list') {
+          const opt = modeOptions[idx];
+          currentMode = opt.value;
+          document.getElementById('mode-text').textContent = opt.label;
+        } else {
+          const opt = modelOptions[idx];
+          currentModel = opt.value;
+          document.getElementById('model-text').textContent = opt.label;
+        }
+        document.getElementById('mode-dropdown')?.classList.add('hidden');
+        document.getElementById('model-dropdown')?.classList.add('hidden');
+        return;
+      }
+      if (target.closest('#btn-send')) {
+        const input = document.getElementById('user-input');
+        const text = input?.value?.trim();
+        if (text) {
+          appendUserMessage(text);
+          vscode.postMessage({ type: 'userMessage', text, mode: currentMode, model: currentModel });
+          input.value = '';
+        }
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'user-input') {
+        const text = e.target.value.trim();
+        if (text) {
+          e.preventDefault();
+          appendUserMessage(text);
+          vscode.postMessage({ type: 'userMessage', text, mode: currentMode, model: currentModel });
+          e.target.value = '';
+        }
+      }
+    });
+
+    window.addEventListener('load', () => {
+      buildDropdowns();
+      vscode.postMessage({ type: 'ready' });
+    });
+    setTimeout(buildDropdowns, 200);
+  </script>
+  <script src="${jsUri}"></script>
 </body>
 </html>`;
     }

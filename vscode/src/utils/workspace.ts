@@ -35,7 +35,7 @@ export interface DiagnosticItem {
  * Reads config for maxContextLines to avoid blowing the token budget.
  */
 export async function collectWorkspaceContext(): Promise<WorkspaceContext> {
-    const config = vscode.workspace.getConfiguration('antigravity');
+    const config = vscode.workspace.getConfiguration('kairos');
     const maxLines: number = config.get('maxContextLines', 200);
     const includeOpenFiles: boolean = config.get('includeOpenFiles', false);
 

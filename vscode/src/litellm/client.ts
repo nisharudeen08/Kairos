@@ -1,6 +1,7 @@
 import { MODELS, ModelAlias } from './models';
 import { logger } from '../utils/logger';
-
+export const LITELLM_BASE_URL = process.env.LITELLM_PROXY_URL ?? "https://kairos-litellm.onrender.com";
+export const LITELLM_KEY = "sk-KAIROS"; // Should ideally come from config, but using hardcoded master key for now per instructions
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
     content: string | Array<{ type: 'text', text: string } | { type: 'image_url', image_url: { url: string } }>;
@@ -8,6 +9,8 @@ export interface ChatMessage {
 
 export interface StreamChunk {
     content: string;
+    reasoning_content?: string;
+    thinking?: string;
     done: boolean;
 }
 
@@ -22,13 +25,28 @@ export interface LiteLLMError {
  * Uses native fetch + SSE (server-sent events) for token streaming.
  * All model name resolution happens here via the MODELS map.
  */
+
+export function resolveMaxTokens(model: ModelAlias, override?: number): number {
+    if (override !== undefined) return override;
+    const alias = model.toLowerCase();
+    if (alias.includes('qwen') || alias.includes('deepseek') || 
+        alias.includes('coder') || alias.includes('nemotron-3')) return 4000;
+    if (alias.includes('gemini') || alias.includes('vision') || 
+        alias.includes('vl')) return 1000;
+    return 2000;
+}
+
+function resolveTemperature(override?: number): number {
+    return override ?? 0.2;
+}
+
 export class LiteLLMClient {
     private readonly timeoutMs: number;
 
     constructor(
         private readonly baseUrl: string,
         private readonly apiKey: string,
-        timeoutMs = 1000
+        timeoutMs = 120000
     ) {
         this.timeoutMs = timeoutMs;
     }
@@ -41,10 +59,21 @@ export class LiteLLMClient {
      */
     async *streamChat(
         modelAlias: ModelAlias,
-        messages: ChatMessage[]
+        messages: ChatMessage[],
+        signal?: AbortSignal
     ): AsyncGenerator<StreamChunk> {
-        const actualModel = MODELS[modelAlias]?.litellmModel || modelAlias;
-        const endpoint = `${this.baseUrl}/v1/chat/completions`;
+        const config = MODELS[modelAlias];
+        let actualModel = config?.litellmModel || modelAlias;
+        let endpoint = `${LITELLM_BASE_URL}/v1/chat/completions`;
+        let headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        };
+
+        if (this.apiKey) {
+            headers['Authorization'] = `Bearer ${this.apiKey}`;
+        }
+
+        // Route all traffic through LiteLLM proxy
 
         logger.debug(`[LiteLLM] POST ${endpoint} model=${actualModel}`);
 
@@ -55,22 +84,19 @@ export class LiteLLMClient {
         try {
             response = await fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${this.apiKey}`,
-                },
+                headers,
                 body: JSON.stringify({
                     model: actualModel,
                     messages,
                     stream: true,
                     temperature: 0.3, // lower = more deterministic (cache-friendly)
                 }),
-                signal: controller.signal
+                signal: signal || controller.signal
             });
             clearTimeout(timeout);
         } catch (err) {
             clearTimeout(timeout);
-            const msg = err instanceof Error ? err.message : String(err);
+            const msg = (err as any).message || String(err);
             const isTimeout = msg.toLowerCase().includes('abort');
             throw {
                 status: 0,
@@ -99,7 +125,7 @@ export class LiteLLMClient {
             } as LiteLLMError;
         }
 
-        yield* this.parseSSEStream(response.body);
+        yield* this.parseSSEStream(response.body!);
     }
 
     /**
@@ -107,27 +133,53 @@ export class LiteLLMClient {
      */
     async complete(
         modelAlias: ModelAlias,
-        messages: ChatMessage[]
+        messages: ChatMessage[],
+        options?: { max_tokens?: number; temperature?: number }
     ): Promise<string> {
-        const actualModel = MODELS[modelAlias]?.litellmModel || modelAlias;
-        const endpoint = `${this.baseUrl}/v1/chat/completions`;
+        const config = MODELS[modelAlias];
+        let actualModel = config?.litellmModel || modelAlias;
+        let endpoint = `${LITELLM_BASE_URL}/v1/chat/completions`;
+        let headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        };
+
+        if (this.apiKey) {
+            headers['Authorization'] = `Bearer ${this.apiKey}`;
+        }
+
+
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
+        async function fetchWithRetry(
+            url: string,
+            init: RequestInit,
+            maxRetries = 3
+        ): Promise<Response> {
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                const res = await fetch(url, init);
+                if (res.status === 429) {
+                    if (attempt === maxRetries - 1) return res;
+                    const wait = Math.pow(2, attempt) * 1000 + Math.random() * 500;
+                    await new Promise(r => setTimeout(r, wait));
+                    continue;
+                }
+                return res;
+            }
+            throw new Error('Max retries exceeded');
+        }
+
         try {
-            const response = await fetch(endpoint, {
+            const response = await fetchWithRetry(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${this.apiKey}`,
-                },
+                headers,
                 body: JSON.stringify({
                     model: actualModel,
                     messages,
                     stream: false,
-                    temperature: 0.1,
-                    max_tokens: 50,
+                    temperature: resolveTemperature(options?.temperature),
+                    max_tokens: resolveMaxTokens(modelAlias, options?.max_tokens),
                 }),
                 signal: controller.signal
             });
@@ -182,17 +234,22 @@ export class LiteLLMClient {
                     }
 
                     try {
-                        const parsed = JSON.parse(data) as {
-                            choices?: Array<{
-                                delta?: { content?: string };
-                                finish_reason?: string;
-                            }>;
-                        };
+                        const parsed = JSON.parse(data) as any;
+                        
+                        // TEMP DEBUG — Phase 5 Diagnostic
+                        console.log("[DEBUG RAW CHUNK]", JSON.stringify(parsed));
+                        console.log("[DEBUG CHUNK TYPE]", typeof parsed);
+                        console.log("[DEBUG FINISH REASON]", parsed.choices?.[0]?.finish_reason);
+                        console.log("[DEBUG DELTA]", parsed.choices?.[0]?.delta);
+                        console.log("[DEBUG TOOL CALLS]", parsed.choices?.[0]?.delta?.tool_calls);
 
-                        const content =
-                            parsed.choices?.[0]?.delta?.content ?? '';
-                        if (content) {
-                            yield { content, done: false };
+                        const delta = parsed.choices?.[0]?.delta;
+                        const content = delta?.content ?? '';
+                        const reasoning_content = delta?.reasoning_content ?? '';
+                        const thinking = delta?.thinking ?? '';
+
+                        if (content || reasoning_content || thinking) {
+                            yield { content, reasoning_content, thinking, done: false };
                         }
 
                         if (parsed.choices?.[0]?.finish_reason === 'stop') {

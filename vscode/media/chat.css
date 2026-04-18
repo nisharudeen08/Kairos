@@ -152,13 +152,10 @@ body {
   border-bottom: 1px solid var(--border);
   background: rgba(255,255,255,0.01);
   flex-shrink: 0;
-  position: relative;
+  gap: 8px;
 }
 
 .top-bar-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
@@ -217,7 +214,15 @@ body {
   color: var(--text);
   background: var(--surface-hover);
 }
-.icon-btn .material-symbols-outlined { font-size: 18px; }
+.icon-btn .material-symbols-outlined { 
+  font-size: 18px; 
+  width: 18px;
+  height: 18px;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
+}
 
 /* ─── Messages ───────────────────────────────────────────────────────────── */
 #messages {
@@ -514,6 +519,16 @@ body {
   transition: color 0.15s, background 0.15s;
 }
 .upload-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+.material-symbols-outlined {
+  display: inline-block;
+  line-height: 1;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .upload-btn .material-symbols-outlined { font-size: 16px; }
 .upload-divider { width: 1px; height: 14px; background: var(--border); }
 
@@ -534,12 +549,20 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: all 0.22s var(--ease);
   position: relative;
   white-space: nowrap;
+  user-select: none;
 }
 .selector-pill:hover { background: rgba(255,255,255,0.07); border-color: var(--border-hover); }
-.selector-pill .material-symbols-outlined { font-size: 14px; }
+.selector-pill .material-symbols-outlined { 
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+}
 
 /* Reasoning pill highlight at level 3 */
 #reasoning-selector-btn.high-reasoning {
@@ -577,7 +600,15 @@ body {
 #btn-send:hover     { background: #7c3aed; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139,92,246,0.45); }
 #btn-send:active    { transform: translateY(0); }
 #btn-send:disabled  { opacity: 0.45; cursor: not-allowed; box-shadow: none; transform: none; }
-#btn-send .material-symbols-outlined { font-size: 18px; font-variation-settings: 'wght' 700; }
+#btn-send .material-symbols-outlined { 
+  font-size: 18px; 
+  font-variation-settings: 'wght' 700;
+  width: 18px;
+  height: 18px;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+}
 
 #btn-stop {
   width: 34px; height: 34px;
@@ -605,10 +636,31 @@ body {
   box-shadow: var(--shadow-md);
   z-index: 200;
   overflow: hidden;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
   animation: fadeIn 0.12s var(--ease);
 }
 .dropdown-panel.wide { min-width: 240px; }
-.dropdown-inner { padding: 6px; }
+.dropdown-inner { 
+  padding: 6px;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+}
+
+/* Dropdown items */
+[data-index] {
+  cursor: pointer !important;
+  transition: all 0.15s var(--ease);
+}
+[data-index]:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+[data-index].bg-white\/5 {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
 
 /* ─── Footer ─────────────────────────────────────────────────────────────── */
 #input-footer {

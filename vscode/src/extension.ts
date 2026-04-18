@@ -1,10 +1,18 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { ChatViewProvider } from './webview/ChatViewProvider';
 import { registerCommands } from './commands/index';
 import { logger } from './utils/logger';
 
 export function activate(context: vscode.ExtensionContext): void {
-    logger.info(`Antigravity AI activating (extensionUri=${context.extensionUri.fsPath})`);
+    let bundleMtime = 'unknown';
+    try {
+        const stat = fs.statSync(__filename);
+        bundleMtime = stat.mtime.toISOString();
+    } catch {
+        // best-effort only
+    }
+    logger.info(`Antigravity AI activating (extensionUri=${context.extensionUri.fsPath}, bundleMtime=${bundleMtime})`);
 
     // Register the sidebar webview provider
     const provider = new ChatViewProvider(context.extensionUri, context);

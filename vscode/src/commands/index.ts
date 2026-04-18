@@ -13,48 +13,48 @@ export function registerCommands(
     provider: ChatViewProvider
 ): void {
     context.subscriptions.push(
-        vscode.commands.registerCommand('antigravity.openChat', () => {
-            vscode.commands.executeCommand('antigravity.chatView.focus');
+        vscode.commands.registerCommand('kairos.openChat', () => {
+            vscode.commands.executeCommand('kairos.chatView.focus');
         }),
 
-        vscode.commands.registerCommand('antigravity.clearChat', () => {
+        vscode.commands.registerCommand('kairos.clearChat', () => {
             provider.clearChat();
         }),
 
-        vscode.commands.registerCommand('antigravity.fix', async () => {
+        vscode.commands.registerCommand('kairos.fix', async () => {
             const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('fix', ctx);
             await focusAndSend(provider, prompt);
         }),
 
-        vscode.commands.registerCommand('antigravity.explain', async () => {
+        vscode.commands.registerCommand('kairos.explain', async () => {
             const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('explain', ctx);
             await focusAndSend(provider, prompt);
         }),
 
-        vscode.commands.registerCommand('antigravity.optimize', async () => {
+        vscode.commands.registerCommand('kairos.optimize', async () => {
             const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('optimize', ctx);
             await focusAndSend(provider, prompt);
         }),
 
-        vscode.commands.registerCommand('antigravity.generateTests', async () => {
+        vscode.commands.registerCommand('kairos.generateTests', async () => {
             const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('generate tests for', ctx);
             await focusAndSend(provider, prompt);
         }),
 
-        vscode.commands.registerCommand('antigravity.refactor', async () => {
+        vscode.commands.registerCommand('kairos.refactor', async () => {
             const ctx = await collectWorkspaceContext();
             const prompt = buildPrompt('refactor', ctx);
             await focusAndSend(provider, prompt);
         }),
 
-        vscode.commands.registerCommand('antigravity.configure', async () => {
+        vscode.commands.registerCommand('kairos.configure', async () => {
             await vscode.commands.executeCommand(
                 'workbench.action.openSettings',
-                'antigravity'
+                'kairos'
             );
         })
     );
@@ -85,7 +85,7 @@ function buildPrompt(
 
 async function focusAndSend(provider: ChatViewProvider, prompt: string): Promise<void> {
     // Focus the sidebar panel first, then send
-    await vscode.commands.executeCommand('antigravity.chatView.focus');
+    await vscode.commands.executeCommand('kairos.chatView.focus');
     await sleep(200); // allow webview to mount/focus
     await provider.sendPrompt(prompt);
 }
