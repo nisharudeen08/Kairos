@@ -568,6 +568,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       { value: "deepseek-local-quality", label: "KAIROS R1 14B", provider: "Ollama" },
       { value: "deepseek-local-fast", label: "KAIROS R1 8B", provider: "Ollama" },
       { value: "qwen-local", label: "Qwen 2.5 Coder 7B", provider: "Ollama" },
+      { value: "gemma-local-fast", label: "Gemma 2B (Local Fast)", provider: "Ollama" },
       // MISTRAL (New)
       { value: "mistral-small", label: "Mistral Small", provider: "Mistral" },
       { value: "codestral", label: "Mistral Codestral", provider: "Mistral" },

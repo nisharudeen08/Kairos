@@ -134,6 +134,7 @@ export const MODELS: Record<string, ModelConfig> = {
         label: 'Qwen 2.5 Coder 7B (Ubuntu)',
         provider: 'Ollama'
     },
+
     'gemma-4-scout-local': {
         alias: 'gemma-4-scout-local',
         litellmModel: 'gemma-4-scout-local',
