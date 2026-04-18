@@ -1,5 +1,5 @@
 .env
-litellm/.env
+# litellm/.env (Removed from ignore so Render gets secrets)
 node_modules/
 dist/
 out/
