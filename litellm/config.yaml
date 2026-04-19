@@ -1,184 +1,639 @@
+# --- LiteLLM Proxy Configuration ---------------------------------------------
+# GITHUB_API_KEY   → github.com/settings/tokens (classic, no scope needed)
+# MISTRAL_API_KEY  → console.mistral.ai (free Experiment plan, phone verify only)
+# GEMINI_API_KEY   → aistudio.google.com/app/apikey (free, no credit card)
+# GROQ_API_KEY     → console.groq.com/keys (free, no credit card)
+# KAIROS AI - PERMANENT STABLE FREE CONFIGURATION
+# Using only the most stable, subsidized free models on OpenRouter.
+# ------------------------------------------------------------------------------
+
 model_list:
 
-  # ── ALL ON WINDOWS via Cloudflare Tunnel ──────────
-
-  - model_name: "gemma-local-fast"
+  # --- LOCAL DEEPSEEK R1 14B (Quality Mode) ---
+  # Works from both Windows and Ubuntu
+  - model_name: deepseek-local-quality
     litellm_params:
-      model: "ollama/gemma:2b"
-      api_base: "https://local-ai.pulsyra.com"
-      timeout: 60
-
-  - model_name: "qwen-coder-ubuntu"
-    litellm_params:
-      model: "ollama/qwen2.5-coder:7b"
-      api_base: "https://local-ai.pulsyra.com"
+      model: ollama/kairos-r1-14b:latest
+      api_base: os.environ/OLLAMA_BASE_URL
       timeout: 120
+      stream: true
 
-  - model_name: "deepseek-r1-8b"
+  - model_name: deepseek-local-fast
     litellm_params:
-      model: "ollama/deepseek-r1:8b"
-      api_base: "https://local-ai.pulsyra.com"
-      timeout: 180
-
-  - model_name: "kairos-r1-14b"
-    litellm_params:
-      model: "ollama/kairos-r1-14b:latest"
-      api_base: "https://local-ai.pulsyra.com"
-      timeout: 300
-      fallbacks: ["ollama/deepseek-r1:8b"]
-
-  - model_name: "360-light"
-    litellm_params:
-      model: "ollama/360-light-local:latest"
-      api_base: "https://local-ai.pulsyra.com"
-      timeout: 300
-      fallbacks: ["ollama/deepseek-r1:8b"]
-
-  - model_name: "kairos-coder"
-    litellm_params:
-      model: "ollama/fervent_mcclintock/KwaiCoder-DS-V2-Lite-Base:Q4_K_M"
-      api_base: "https://local-ai.pulsyra.com"
-      timeout: 300
-      fallbacks: ["ollama/deepseek-r1:8b"]
-
-  - model_name: "gemma-4-scout-local"
-    litellm_params:
-      model: "ollama/gemma:2b"  # Fallback to 2b if special scout model missing locally
-      api_base: "https://local-ai.pulsyra.com"
-      timeout: 60
-
-  # ── CLOUD FALLBACK ────────────────────────────────
-
-  - model_name: "mistral-large"
-    litellm_params:
-      model: "mistral/mistral-large-latest"
-      api_key: "os.environ/MISTRAL_API_KEY"
-      timeout: 60
-
-
-  - model_name: "codestral"
-    litellm_params:
-      model: "mistral/codestral-latest"
-      api_key: "os.environ/MISTRAL_API_KEY"
-      timeout: 60
-
-
-  - model_name: "llama-3.3-70b"
-    litellm_params:
-      model: "openrouter/meta-llama/llama-3.3-70b-instruct"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
-
-  - model_name: "groq-llama-3.3-70b"
-    litellm_params:
-      model: "groq/llama-3.3-70b-versatile"
-      api_key: "os.environ/GROQ_API_KEY"
-      timeout: 60
-
-  - model_name: "github-deepseek-r1"
-    litellm_params:
-      model: "github/deepseek-r1"
-      api_key: "os.environ/GITHUB_API_KEY"
-      timeout: 120
-
-  - model_name: "groq-qwen-qwq-32b"
-    litellm_params:
-      model: "groq/qwq-32b"
-      api_key: "os.environ/GROQ_API_KEY"
-      timeout: 120
-
-  - model_name: "lfm-2.5-1.2b-thinking"
-    litellm_params:
-      model: "openrouter/liquid/lfm-3b" # Approximate fallback
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
-
-  - model_name: "groq-llama-3.1-8b"
-    litellm_params:
-      model: "groq/llama-3.1-8b-instant"
-      api_key: "os.environ/GROQ_API_KEY"
+      model: ollama/deepseek-r1:8b
+      api_base: os.environ/OLLAMA_BASE_URL
       timeout: 30
+      stream: true
 
-  - model_name: "github-gpt4o"
+  # --- LOCAL QWEN (Ubuntu Fallback Only) ---
+  - model_name: qwen-local
     litellm_params:
-      model: "github/gpt-4o"
-      api_key: "os.environ/GITHUB_API_KEY"
-      timeout: 60
+      model: ollama/qwen2.5-coder:7b
+      api_base: os.environ/OLLAMA_BASE_URL
+      timeout: 30
+      stream: true
 
-  - model_name: "qwen3-coder"
+  # --- LOCAL POWERHOUSE MODELS (Optimized for Drive D) ---
+  - model_name: kwaicoder-local
     litellm_params:
-      model: "openrouter/qwen/qwen-2.5-coder-32b-instruct"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
-
-  - model_name: "gemma-3-27b"
-    litellm_params:
-      model: "openrouter/google/gemma-2-27b-it" 
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
-
-  - model_name: "gemini-2.5-pro"
-    litellm_params:
-      model: "gemini/gemini-1.5-pro"
-      api_key: "os.environ/GEMINI_API_KEY"
+      model: ollama/fervent_mcclintock/KwaiCoder-DS-V2-Lite-Base:Q4_K_M
+      api_base: os.environ/OLLAMA_BASE_URL
       timeout: 120
+      stream: true
 
-  - model_name: "gemini-2.5-flash"
+  - model_name: 360-light-local
     litellm_params:
-      model: "gemini/gemini-1.5-flash"
-      api_key: "os.environ/GEMINI_API_KEY"
-      timeout: 60
-
-  - model_name: "nemotron-nano-9b"
-    litellm_params:
-      model: "openrouter/nvidia/llama-3.1-nemotron-70b-instruct"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
-
-  - model_name: "gpt-oss-20b"
-    litellm_params:
-      model: "openrouter/meta-llama/llama-3.1-8b-instruct" 
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
-
-  - model_name: "hermes-3-405b"
-    litellm_params:
-      model: "openrouter/nousresearch/hermes-3-llama-3.1-405b"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      model: ollama/360-light-local:latest
+      api_base: os.environ/OLLAMA_BASE_URL
       timeout: 120
+      stream: true
 
-  - model_name: "step-3.5-flash"
+  - model_name: gemma-4-scout-local
     litellm_params:
-      model: "openrouter/google/gemini-flash-1.5"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
+      model: ollama/gemma4:e4b
+      api_base: os.environ/OLLAMA_BASE_URL
+      timeout: 30
+      stream: true
 
-  - model_name: "arcee-trinity-mini"
+  # --- AUTOCOMPLETE GROUP - fast, low latency ---
+
+  - model_name: step-3.5-flash
     litellm_params:
-      model: "openrouter/arcee/arcee-agent"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
+      model: openrouter/stepfun/step-3.5-flash:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: step-3.5-flash
+    litellm_params:
+      model: openrouter/stepfun/step-3.5-flash:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: step-3.5-flash
+    litellm_params:
+      model: openrouter/stepfun/step-3.5-flash:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: step-3.5-flash
+    litellm_params:
+      model: openrouter/stepfun/step-3.5-flash:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: step-3.5-flash
+    litellm_params:
+      model: openrouter/stepfun/step-3.5-flash:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
 
+  - model_name: gpt-oss-20b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: gpt-oss-20b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: gpt-oss-20b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: gpt-oss-20b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: gpt-oss-20b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-20b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: nemotron-nano-9b
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-9b-v2:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: nemotron-nano-9b
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-9b-v2:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: nemotron-nano-9b
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-9b-v2:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: nemotron-nano-9b
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-9b-v2:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: nemotron-nano-9b
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-9b-v2:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: arcee-trinity-mini
+    litellm_params:
+      model: openrouter/arcee-ai/trinity-mini:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: arcee-trinity-mini
+    litellm_params:
+      model: openrouter/arcee-ai/trinity-mini:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: arcee-trinity-mini
+    litellm_params:
+      model: openrouter/arcee-ai/trinity-mini:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: arcee-trinity-mini
+    litellm_params:
+      model: openrouter/arcee-ai/trinity-mini:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: arcee-trinity-mini
+    litellm_params:
+      model: openrouter/arcee-ai/trinity-mini:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  # --- CHAT GROUP - explain, document, answer ---
+
+  - model_name: llama-3.3-70b
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: llama-3.3-70b
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: llama-3.3-70b
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: llama-3.3-70b
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: llama-3.3-70b
+    litellm_params:
+      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: hermes-3-405b
+    litellm_params:
+      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: hermes-3-405b
+    litellm_params:
+      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: hermes-3-405b
+    litellm_params:
+      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: hermes-3-405b
+    litellm_params:
+      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: hermes-3-405b
+    litellm_params:
+      model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: gemma-3-27b
+    litellm_params:
+      model: openrouter/google/gemma-3-27b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: gemma-3-27b
+    litellm_params:
+      model: openrouter/google/gemma-3-27b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: gemma-3-27b
+    litellm_params:
+      model: openrouter/google/gemma-3-27b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: gemma-3-27b
+    litellm_params:
+      model: openrouter/google/gemma-3-27b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: gemma-3-27b
+    litellm_params:
+      model: openrouter/google/gemma-3-27b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: gemma-4-31b
+    litellm_params:
+      model: openrouter/google/gemma-4-31b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: gemma-4-31b
+    litellm_params:
+      model: openrouter/google/gemma-4-31b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: gemma-4-31b
+    litellm_params:
+      model: openrouter/google/gemma-4-31b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: gemma-4-31b
+    litellm_params:
+      model: openrouter/google/gemma-4-31b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: gemma-4-31b
+    litellm_params:
+      model: openrouter/google/gemma-4-31b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  # --- CODING GROUP - best quality, complex tasks ---
+
+  - model_name: qwen3-coder
+    litellm_params:
+      model: openrouter/qwen/qwen3-coder:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: qwen3-coder
+    litellm_params:
+      model: openrouter/qwen/qwen3-coder:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: qwen3-coder
+    litellm_params:
+      model: openrouter/qwen/qwen3-coder:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: qwen3-coder
+    litellm_params:
+      model: openrouter/qwen/qwen3-coder:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: qwen3-coder
+    litellm_params:
+      model: openrouter/qwen/qwen3-coder:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: qwen3-next-80b
+    litellm_params:
+      model: openrouter/qwen/qwen3-next-80b-a3b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: qwen3-next-80b
+    litellm_params:
+      model: openrouter/qwen/qwen3-next-80b-a3b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: qwen3-next-80b
+    litellm_params:
+      model: openrouter/qwen/qwen3-next-80b-a3b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: qwen3-next-80b
+    litellm_params:
+      model: openrouter/qwen/qwen3-next-80b-a3b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: qwen3-next-80b
+    litellm_params:
+      model: openrouter/qwen/qwen3-next-80b-a3b-instruct:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: nemotron-3-super
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: nemotron-3-super
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: nemotron-3-super
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: nemotron-3-super
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: nemotron-3-super
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: gpt-oss-120b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-120b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: gpt-oss-120b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-120b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: gpt-oss-120b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-120b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: gpt-oss-120b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-120b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: gpt-oss-120b
+    litellm_params:
+      model: openrouter/openai/gpt-oss-120b:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  # --- VISION GROUP - image/screenshot understanding ---
+
+  - model_name: nemotron-nano-12b-vl
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-12b-v2-vl:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: nemotron-nano-12b-vl
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-12b-v2-vl:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: nemotron-nano-12b-vl
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-12b-v2-vl:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: nemotron-nano-12b-vl
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-12b-v2-vl:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: nemotron-nano-12b-vl
+    litellm_params:
+      model: openrouter/nvidia/nemotron-nano-12b-v2-vl:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: gemma-4-26b-vision
+    litellm_params:
+      model: openrouter/google/gemma-4-26b-a4b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: gemma-4-26b-vision
+    litellm_params:
+      model: openrouter/google/gemma-4-26b-a4b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: gemma-4-26b-vision
+    litellm_params:
+      model: openrouter/google/gemma-4-26b-a4b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: gemma-4-26b-vision
+    litellm_params:
+      model: openrouter/google/gemma-4-26b-a4b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: gemma-4-26b-vision
+    litellm_params:
+      model: openrouter/google/gemma-4-26b-a4b-it:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  # --- SPECIALIST GROUP ---
+
+  - model_name: dolphin-mistral-24b
+    litellm_params:
+      model: openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: dolphin-mistral-24b
+    litellm_params:
+      model: openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: dolphin-mistral-24b
+    litellm_params:
+      model: openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: dolphin-mistral-24b
+    litellm_params:
+      model: openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: dolphin-mistral-24b
+    litellm_params:
+      model: openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  - model_name: lfm-2.5-1.2b-thinking
+    litellm_params:
+      model: openrouter/liquid/lfm-2.5-1.2b-thinking:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_1
+  - model_name: lfm-2.5-1.2b-thinking
+    litellm_params:
+      model: openrouter/liquid/lfm-2.5-1.2b-thinking:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_2
+  - model_name: lfm-2.5-1.2b-thinking
+    litellm_params:
+      model: openrouter/liquid/lfm-2.5-1.2b-thinking:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_3
+  - model_name: lfm-2.5-1.2b-thinking
+    litellm_params:
+      model: openrouter/liquid/lfm-2.5-1.2b-thinking:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_4
+  - model_name: lfm-2.5-1.2b-thinking
+    litellm_params:
+      model: openrouter/liquid/lfm-2.5-1.2b-thinking:free
+      api_base: https://openrouter.ai/api/v1
+      api_key: os.environ/OPENROUTER_API_KEY_5
+
+  # --- PROVIDER 2: GITHUB MODELS ---
+
+  - model_name: github-gpt-4o-mini
+    litellm_params:
+      model: github/gpt-4o-mini
+      api_key: os.environ/GITHUB_API_KEY
+
+  - model_name: github-llama-3.3-70b
+    litellm_params:
+      model: github/Llama-3.3-70B-Instruct
+      api_key: os.environ/GITHUB_API_KEY
+
+  - model_name: github-deepseek-r1
+    litellm_params:
+      model: github/DeepSeek-R1
+      api_key: os.environ/GITHUB_API_KEY
+
+  # --- PROVIDER 3: MISTRAL ---
+
+  - model_name: codestral
+    litellm_params:
+      model: mistral/codestral-latest
+      api_key: os.environ/MISTRAL_API_KEY
+
+  - model_name: mistral-small
+    litellm_params:
+      model: mistral/mistral-small-latest
+      api_key: os.environ/MISTRAL_API_KEY
+
+  - model_name: devstral-small
+    litellm_params:
+      model: mistral/devstral-small-latest
+      api_key: os.environ/MISTRAL_API_KEY
+
+  # --- PROVIDER 4: GOOGLE GEMINI ---
+
+  - model_name: gemini-2.5-flash-lite
+    litellm_params:
+      model: gemini/gemini-2.5-flash-lite
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-2.5-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GEMINI_API_KEY
+
+  # --- PROVIDER 5: GROQ ---
+
+  - model_name: groq-llama-3.3-70b
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: groq-llama-3.1-8b
+    litellm_params:
+      model: groq/llama-3.1-8b-instant
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: groq-llama-4-scout
+    litellm_params:
+      model: groq/meta-llama/llama-4-scout-17b-16e-instruct
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: groq-qwen-qwq-32b
+    litellm_params:
+      model: groq/qwen-qwq-32b
+      api_key: os.environ/GROQ_API_KEY
+
+# --- Router settings ---
 router_settings:
-  routing_strategy: "usage-based-routing"
-  num_retries: 2
-  timeout: 300
+  routing_strategy: simple-shuffle
+  num_retries: 5
+  retry_after: 3
+  allowed_fails: 3
+  fallbacks:
+    # ── OpenRouter Autocomplete ──────────────────────────────────────────────
+    - {"deepseek-local-quality": ["360-light-local", "qwen3-coder", "nemotron-3-super"]}
+    - {"deepseek-local-fast": ["gemma-4-scout-local", "groq-llama-3.1-8b", "step-3.5-flash"]}
+    - {"qwen-local": ["kwaicoder-local", "qwen3-coder", "gpt-oss-20b"]}
+    - {"kwaicoder-local": ["qwen3-coder", "codestral"]}
+    - {"360-light-local": ["deepseek-local-quality", "github-deepseek-r1"]}
+    - {"gemma-4-scout-local": ["groq-llama-4-scout", "step-3.5-flash"]}
 
+    - {"step-3.5-flash":        ["groq-llama-3.1-8b", "gpt-oss-20b", "nemotron-nano-9b", "arcee-trinity-mini"]}
+    - {"gpt-oss-20b":           ["step-3.5-flash", "groq-llama-3.1-8b", "nemotron-nano-9b"]}
+    - {"nemotron-nano-9b":      ["gpt-oss-20b", "step-3.5-flash", "groq-llama-3.1-8b"]}
+    - {"arcee-trinity-mini":    ["step-3.5-flash", "gpt-oss-20b", "groq-llama-3.1-8b"]}
+
+    # ── OpenRouter Chat ──────────────────────────────────────────────────────
+    - {"llama-3.3-70b":         ["hermes-3-405b", "gemma-3-27b", "groq-llama-3.3-70b"]}
+    - {"hermes-3-405b":         ["llama-3.3-70b", "gemma-3-27b", "groq-llama-3.3-70b"]}
+    - {"gemma-3-27b":           ["llama-3.3-70b", "hermes-3-405b", "gemini-2.5-flash"]}
+    - {"gemma-4-31b":           ["gemma-3-27b", "llama-3.3-70b", "gemini-2.5-flash"]}
+
+    # ── OpenRouter Coding ────────────────────────────────────────────────────
+    - {"qwen3-coder":           ["nemotron-3-super", "gpt-oss-120b", "codestral"]}
+    - {"qwen3-next-80b":        ["groq-llama-3.3-70b", "gemma-3-27b", "gpt-oss-120b"]}
+    - {"nemotron-3-super":      ["qwen3-coder", "gpt-oss-120b", "groq-llama-3.3-70b"]}
+    - {"gpt-oss-120b":          ["qwen3-coder", "nemotron-3-super", "codestral"]}
+
+    # ── OpenRouter Vision ────────────────────────────────────────────────────
+    - {"nemotron-nano-12b-vl":  ["gemma-4-26b-vision", "gemini-2.5-flash", "llama-3.3-70b"]}
+    - {"gemma-4-26b-vision":    ["nemotron-nano-12b-vl", "gemini-2.5-flash", "llama-3.3-70b"]}
+
+    # ── OpenRouter Specialist ────────────────────────────────────────────────
+    - {"dolphin-mistral-24b":   ["mistral-small", "groq-llama-3.3-70b", "llama-3.3-70b"]}
+    - {"lfm-2.5-1.2b-thinking": ["groq-qwen-qwq-32b", "github-deepseek-r1", "gemini-2.5-pro"]}
+
+    # ── Groq ─────────────────────────────────────────────────────────────────
+    - {"groq-llama-3.1-8b":     ["step-3.5-flash", "gemini-2.5-flash-lite", "gpt-oss-20b"]}
+    - {"groq-llama-3.3-70b":    ["llama-3.3-70b", "gemini-2.5-flash", "nemotron-3-super"]}
+    - {"groq-llama-4-scout":    ["groq-llama-3.3-70b", "llama-3.3-70b", "gemini-2.5-flash"]}
+    - {"groq-qwen-qwq-32b":     ["github-deepseek-r1", "lfm-2.5-1.2b-thinking", "gemini-2.5-pro"]}
+
+    # ── Mistral ───────────────────────────────────────────────────────────────
+    - {"codestral":             ["devstral-small", "qwen3-coder", "gpt-oss-120b"]}
+    - {"mistral-small":         ["gemma-3-27b", "llama-3.3-70b", "groq-llama-3.3-70b"]}
+    - {"devstral-small":        ["codestral", "qwen3-coder", "nemotron-3-super"]}
+
+    # ── Gemini ────────────────────────────────────────────────────────────────
+    - {"gemini-2.5-flash-lite": ["groq-llama-3.1-8b", "gpt-oss-20b", "step-3.5-flash"]}
+    - {"gemini-2.5-flash":      ["gemini-2.5-flash-lite", "llama-3.3-70b", "groq-llama-3.3-70b"]}
+    - {"gemini-2.5-pro":        ["gemini-2.5-flash", "nemotron-3-super", "hermes-3-405b"]}
+
+    # ── GitHub Models ─────────────────────────────────────────────────────────
+    - {"github-gpt-4o-mini":    ["gemini-2.5-flash-lite", "gpt-oss-20b", "groq-llama-3.1-8b"]}
+    - {"github-llama-3.3-70b":  ["llama-3.3-70b", "groq-llama-3.3-70b", "gemini-2.5-flash"]}
+    - {"github-deepseek-r1":    ["groq-qwen-qwq-32b", "gemini-2.5-pro", "hermes-3-405b"]}
+
+# --- General (proxy-level) settings ---
 general_settings:
-  master_key: "sk-KAIROS"
-  max_parallel_requests: 1
+  disable_spend_logs: true
+  store_model_in_db: false
+  disable_reset_budget: true
+  disable_error_logs: false
+  no_auth: true
+  allow_health_check_no_auth: true
 
+# --- Proxy settings ---
 litellm_settings:
   drop_params: true
-
-
-
-
-
-
-
-
-
-
-
-
+  cache: false
+  disable_usage_tracking: true
+  usage_tracking: false
+  store_model_in_db: false
+  proxy_budget_resilient: false
+  disable_stats: true
+  disable_admin_ui: true
+  callbacks: []
+  success_callback: []
+  failure_callback: []
