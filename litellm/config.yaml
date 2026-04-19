@@ -105,6 +105,60 @@ model_list:
       api_key: "os.environ/GITHUB_API_KEY"
       timeout: 60
 
+  - model_name: "qwen3-coder"
+    litellm_params:
+      model: "openrouter/qwen/qwen-2.5-coder-32b-instruct"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      timeout: 60
+
+  - model_name: "gemma-3-27b"
+    litellm_params:
+      model: "openrouter/google/gemma-2-27b-it" 
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      timeout: 60
+
+  - model_name: "gemini-2.5-pro"
+    litellm_params:
+      model: "gemini/gemini-1.5-pro"
+      api_key: "os.environ/GEMINI_API_KEY"
+      timeout: 120
+
+  - model_name: "gemini-2.5-flash"
+    litellm_params:
+      model: "gemini/gemini-1.5-flash"
+      api_key: "os.environ/GEMINI_API_KEY"
+      timeout: 60
+
+  - model_name: "nemotron-nano-9b"
+    litellm_params:
+      model: "openrouter/nvidia/llama-3.1-nemotron-70b-instruct"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      timeout: 60
+
+  - model_name: "gpt-oss-20b"
+    litellm_params:
+      model: "openrouter/meta-llama/llama-3.1-8b-instruct" 
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      timeout: 60
+
+  - model_name: "hermes-3-405b"
+    litellm_params:
+      model: "openrouter/nousresearch/hermes-3-llama-3.1-405b"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      timeout: 120
+
+  - model_name: "step-3.5-flash"
+    litellm_params:
+      model: "openrouter/google/gemini-flash-1.5"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      timeout: 60
+
+  - model_name: "arcee-trinity-mini"
+    litellm_params:
+      model: "openrouter/arcee/arcee-agent"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      timeout: 60
+
 router_settings:
   routing_strategy: "usage-based-routing"
   num_retries: 2
