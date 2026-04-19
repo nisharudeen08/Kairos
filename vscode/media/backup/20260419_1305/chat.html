@@ -90,21 +90,11 @@
     <div id="toast-container" style="position:absolute;top:88px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:4px;pointer-events:none;"></div>
     <div id="messages"></div>
 
-    <!-- Thinking Preview Bar (shown live during streaming) -->
-    <div id="thinking-bar" class="hidden" style="padding:4px 16px 0;">
-      <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;
-                  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
-                  font-size:10px;color:var(--text-faint,#475569);font-family:monospace;overflow:hidden;">
-        <span class="material-symbols-outlined" style="font-size:13px;flex-shrink:0;animation:spin 1s linear infinite">autorenew</span>
-        <span id="thinking-preview" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
-      </div>
-    </div>
-
     <!-- Input Section -->
     <div id="input-section">
       <div class="input-container">
         <div class="input-row">
-          <textarea id="user-input" rows="1" placeholder="Ask anything… Ctrl+V to paste image"></textarea>
+          <textarea id="user-input" rows="1" placeholder="Ask anything… @ to mention, / for commands"></textarea>
         </div>
         <div class="input-controls-row">
           <div class="controls-left">

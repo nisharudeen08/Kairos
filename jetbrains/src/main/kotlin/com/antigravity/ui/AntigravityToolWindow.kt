@@ -17,9 +17,9 @@ import javax.swing.JPanel
 
 class AntigravityToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val toolWindowContent = AntigravityToolWindow(project)
+        val panel = KairosBrowserPanel(project)
         val content = ContentFactory.getInstance()
-            .createContent(toolWindowContent.getContent(), "", false)
+            .createContent(panel, "", false)
         toolWindow.contentManager.addContent(content)
     }
 }
@@ -84,10 +84,33 @@ class AntigravityToolWindow(private val project: Project) {
         val css = if (cssFile.exists()) cssFile.readText() else ""
         val js = if (jsFile.exists()) jsFile.readText() else ""
 
-        // Inject CSS and JS into the HTML
-        html = html.replace("<link rel=\"stylesheet\" href=\"chat.css\">", "<style>$css</style>")
-        html = html.replace("<script src=\"chat.js\"></script>", "<script>$js</script>")
+        // Universal Shim to mock VS Code API in JetBrains
+        val vscodeShim = """
+            <script>
+            window.acquireVsCodeApi = function() {
+                return {
+                    postMessage: function(message) {
+                        if (window.cefQuery) {
+                            window.cefQuery({
+                                request: JSON.stringify(message),
+                                onSuccess: function(response) {},
+                                onFailure: function(error_code, error_message) {}
+                            });
+                        }
+                    }
+                };
+            };
+            window.antigravityReceiveMessage = function(msg) {
+                window.dispatchEvent(new MessageEvent('message', { data: msg }));
+            };
+            </script>
+        """.trimIndent()
 
+        // Inject CSS and JS into the HTML using exact VS Code placeholders
+        html = html.replace("<link rel=\"stylesheet\" href=\"\${cssUri}\">", "<style>\$css</style>")
+        html = html.replace("<script nonce=\"\${nonce}\" src=\"\${jsUri}\"></script>", "\$vscodeShim\n<script>\$js</script>")
+        html = html.replace("\${nonce}", "jetbrains")
+        
         return html
     }
 

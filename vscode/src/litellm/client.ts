@@ -64,7 +64,7 @@ export class LiteLLMClient {
     ): AsyncGenerator<StreamChunk> {
         const config = MODELS[modelAlias];
         let actualModel = config?.litellmModel || modelAlias;
-        let endpoint = `${LITELLM_BASE_URL}/v1/chat/completions`;
+        let endpoint = `${this.baseUrl}/v1/chat/completions`;
         let headers: Record<string, string> = {
             'Content-Type': 'application/json'
         };
@@ -138,7 +138,7 @@ export class LiteLLMClient {
     ): Promise<string> {
         const config = MODELS[modelAlias];
         let actualModel = config?.litellmModel || modelAlias;
-        let endpoint = `${LITELLM_BASE_URL}/v1/chat/completions`;
+        let endpoint = `${this.baseUrl}/v1/chat/completions`;
         let headers: Record<string, string> = {
             'Content-Type': 'application/json'
         };

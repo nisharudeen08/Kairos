@@ -12,32 +12,32 @@ import java.time.Duration
  * (Simple implementation using JDK 11+ HttpClient)
  */
 class LiteLLMClient(private val baseUrl: String, private val apiKey: String) {
-    private val client = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofMillis(1000))
-        .build()
-
     fun completeSync(modelAlias: String, prompt: String): String {
         val endpoint = "$baseUrl/v1/chat/completions"
-        val body = """{
-            "model": "$modelAlias",
-            "messages": [{"role": "user", "content": "$prompt"}],
-            "stream": false
-        }""".trimIndent()
-
-        val request = HttpRequest.newBuilder()
-            .uri(URI.create(endpoint))
-            .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer $apiKey")
-            .POST(HttpRequest.BodyPublishers.ofString(body))
-            .build()
+        val safePrompt = prompt.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
+        val body = "{\"model\":\"$modelAlias\",\"messages\":[{\"role\":\"user\",\"content\":\"$safePrompt\"}],\"stream\":false}"
 
         return try {
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-            if (response.statusCode() != 200) {
-                "Error: ${response.statusCode()} ${response.body()}"
+            val url = java.net.URL(endpoint)
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Authorization", "Bearer $apiKey")
+            connection.doOutput = true
+
+            val os = connection.outputStream
+            os.write(body.toByteArray(java.nio.charset.StandardCharsets.UTF_8))
+            os.close()
+
+            val status = connection.responseCode
+            val responseText = if (status in 200..299) {
+                connection.inputStream.bufferedReader().use { it.readText() }
             } else {
-                response.body()
+                val errorText = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "No Error Stream"
+                "Error: $status $errorText"
             }
+            connection.disconnect()
+            responseText
         } catch (e: Exception) {
             "Network Error: ${e.message}"
         }

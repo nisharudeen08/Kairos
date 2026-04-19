@@ -44,25 +44,27 @@ const modelOptions = [
   { value: 'auto',                  label: 'Auto (AI picks)',          provider: 'Auto',       group: 'Auto'       },
 
   // ── LOCAL (Ollama → ollama.pulsyra.com) ──
-  { value: 'gemma-local-fast',      label: 'Gemma 2B (Fast)',          provider: 'Local',      group: 'Local'      },
-  { value: 'qwen-coder-ubuntu',     label: 'Qwen 2.5 Coder 7B',        provider: 'Local',      group: 'Local'      },
-  { value: 'deepseek-r1-8b',        label: 'DeepSeek R1 8B',           provider: 'Local',      group: 'Local'      },
-  { value: 'kairos-r1-14b',         label: 'Kairos R1 14B',            provider: 'Local',      group: 'Local'      },
-  { value: '360-light',             label: '360 Light',                provider: 'Local',      group: 'Local'      },
-  { value: 'kairos-coder',          label: 'KwaiCoder DS Lite',         provider: 'Local',      group: 'Local'      },
-  { value: 'gemma-4-scout-local',   label: 'Gemma Scout Local',         provider: 'Local',      group: 'Local'      },
+  { value: 'gemma-local-fast',      label: '🏠 Gemma 2B (Fast)',          provider: 'Local',      group: 'Local'      },
+  { value: 'qwen-coder-ubuntu',     label: '🏠 Qwen 2.5 Coder 7B',        provider: 'Local',      group: 'Local'      },
+  { value: 'deepseek-r1-8b',        label: '🏠 DeepSeek R1 8B 🧠',        provider: 'Local',      group: 'Local'      },
+  { value: 'kairos-r1-14b',         label: '🏠 Kairos R1 14B 🧠',         provider: 'Local',      group: 'Local'      },
+  { value: '360-light',             label: '🏠 360 Light Local',           provider: 'Local',      group: 'Local'      },
+  { value: 'kairos-coder',          label: '🏠 KwaiCoder DS Lite',          provider: 'Local',      group: 'Local'      },
+  { value: 'gemma-4-scout-local',   label: '🏠 Gemma Scout Local',          provider: 'Local',      group: 'Local'      },
 
   // ── OPENROUTER (free tier) ──
   { value: 'llama-3.3-70b',         label: 'Llama 3.3 70B',             provider: 'OpenRouter', group: 'OpenRouter'  },
-  { value: 'lfm-2.5-1.2b-thinking', label: 'LFM 2.5 Thinking',          provider: 'OpenRouter', group: 'OpenRouter'  },
+  { value: 'gpt-oss-20b',           label: 'GPT-OSS 20B',               provider: 'OpenRouter', group: 'OpenRouter'  },
+  { value: 'gemma-3-27b',           label: 'Gemma 3 27B',               provider: 'OpenRouter', group: 'OpenRouter'  },
+  { value: 'lfm-2.5-1.2b-thinking', label: 'LFM 2.5 1.2B Thinking',    provider: 'OpenRouter', group: 'OpenRouter'  },
 
   // ── GROQ ──
-  { value: 'groq-llama-3.1-8b',    label: 'Llama 3.1 8B',              provider: 'Groq',       group: 'Groq'        },
-  { value: 'groq-llama-3.3-70b',   label: 'Llama 3.3 70B',             provider: 'Groq',       group: 'Groq'        },
-  { value: 'groq-qwen-qwq-32b',    label: 'Qwen QwQ 32B',              provider: 'Groq',       group: 'Groq'        },
+  { value: 'groq-llama-3.1-8b',    label: '⚡ Llama 3.1 8B',             provider: 'Groq',       group: 'Groq'        },
+  { value: 'groq-llama-3.3-70b',   label: '⚡ Llama 3.3 70B',            provider: 'Groq',       group: 'Groq'        },
+  { value: 'groq-qwen-qwq-32b',    label: '⚡ Qwen QwQ 32B',             provider: 'Groq',       group: 'Groq'        },
 
   // ── MISTRAL ──
-  { value: 'codestral',             label: 'Codestral',                 provider: 'Mistral',    group: 'Mistral'     },
+  { value: 'codestral',             label: 'Codestral ⭐',               provider: 'Mistral',    group: 'Mistral'     },
   { value: 'mistral-large',         label: 'Mistral Large',             provider: 'Mistral',    group: 'Mistral'     },
 
   // ── GEMINI ──
@@ -293,31 +295,6 @@ document.addEventListener('keydown', (e) => {
 fileInput?.addEventListener('change',  handleFileSelect);
 imageInput?.addEventListener('change', handleImageSelect);
 
-// ─── Clipboard Paste → Image attach ───────────────────────────────────────────
-document.addEventListener('paste', (e) => {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of Array.from(items)) {
-    if (!item.type.startsWith('image/')) continue;
-    e.preventDefault();
-    const blob = item.getAsFile();
-    if (!blob) continue;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result?.toString();
-      if (!dataUrl) return;
-      pendingImages.push(dataUrl);
-      appendSystemMessage(
-        `<span class="flex items-center gap-1.5 text-emerald-400">` +
-        `<span class="material-symbols-outlined text-[13px]">image</span>` +
-        `Image pasted — ready to send</span>`
-      );
-    };
-    reader.readAsDataURL(blob);
-    break; // one image per paste
-  }
-});
-
 // ─── Action Bar Button Handlers ───────────────────────────────────────────────
 
 
@@ -396,7 +373,7 @@ function buildDropdowns() {
                class="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] ${
                  isAuto ? 'text-violet-300 font-semibold' : 'text-slate-300'
                } hover:text-white">
-            <span class="opacity-30 text-[9px] font-mono w-14 shrink-0 text-right">${opt.provider}</span>
+            ${isAuto ? '🤖' : `<span class="opacity-40 text-[9px] font-mono mr-1">[${opt.provider}]</span>`}
             ${opt.label}
           </div>
         `).join('')}
@@ -565,16 +542,6 @@ function handleToken(content) {
     streamTarget.appendChild(cursorEl);
   }
 
-  // ── Dynamic thinking preview ───────────────────────────────────────────
-  const thinkBar = document.getElementById('thinking-preview');
-  if (thinkBar) {
-    // Show the last 120 chars of the current stream as a live preview
-    const preview = streamBuffer.replace(/```[\s\S]*?```/g, '').trim();
-    const tail = preview.slice(-120).replace(/\n/g, ' ');
-    thinkBar.textContent = tail || '...';
-    thinkBar.parentElement?.classList.remove('hidden');
-  }
-
   scheduleScroll();
 }
 
@@ -632,13 +599,6 @@ function handleDone(aborted = false, metadata = null) {
     appendSystemMessage('Generation stopped.');
   } else if (metadata) {
     appendAgentMeta(metadata);
-  }
-
-  // Hide the thinking preview bar when done
-  const thinkBar = document.getElementById('thinking-preview');
-  if (thinkBar) {
-    thinkBar.parentElement?.classList.add('hidden');
-    thinkBar.textContent = '';
   }
 
   streamBuffer = '';
@@ -924,15 +884,42 @@ function clearMessages() {
 }
 
 function renderEmptyState() {
+  const hints = [
+    { icon: 'terminal',    text: 'Explain my current file structure' },
+    { icon: 'bug_report',  text: 'Find bugs in the selected code'    },
+    { icon: 'auto_fix_high', text: 'Refactor this function'           },
+    { icon: 'science',     text: 'Write tests for this module'        },
+  ];
+
   messagesEl.innerHTML = `
     <div id="empty-state"
-         class="h-full flex flex-col items-center justify-center text-center max-w-[240px] mx-auto space-y-3 py-8">
-      <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-500">
-        <span class="material-symbols-outlined text-[28px]">auto_awesome</span>
+         class="h-full flex flex-col items-center justify-center text-center max-w-[280px] mx-auto space-y-5 py-8">
+      <div class="relative">
+        <div class="w-16 h-16 rounded-3xl bg-primary/10 border border-primary/20 flex items-center
+                    justify-center text-primary shadow-2xl shadow-primary/20 animate-pulse-slow">
+          <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
+        </div>
+        <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500
+                    border-2 border-[#090b14] flex items-center justify-center">
+          <span class="material-symbols-outlined text-[10px] text-white">check</span>
+        </div>
       </div>
       <div class="space-y-1">
-        <h2 class="text-white font-semibold text-[13px]">Glad to see you</h2>
-        <p class="text-[11px] text-slate-600 leading-relaxed">Ask anything or attach a file to get started.</p>
+        <h2 class="text-white font-bold text-[15px]">How can I help today?</h2>
+        <p class="text-[11px] text-slate-500 leading-relaxed">
+          I'm your Kairos AI agent — I can build, test, debug, and refactor using the latest open-source models.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 w-full">
+        ${hints.map(h => `
+          <button class="hint-chip group flex items-center gap-3 p-2.5 rounded-xl
+                         bg-white/3 border border-white/5 text-left
+                         hover:bg-white/6 hover:border-primary/20 transition-all">
+            <span class="material-symbols-outlined text-sm text-slate-600
+                         group-hover:text-primary transition-colors">${h.icon}</span>
+            <span class="text-[11px] text-slate-400 group-hover:text-slate-200">${h.text}</span>
+          </button>
+        `).join('')}
       </div>
     </div>
   `;
@@ -1041,49 +1028,27 @@ function renderHistory(sessions) {
     const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const day  = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
     return `
-      <div style="display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:10px;
-                  border:1px solid transparent;margin-bottom:2px;transition:background 0.15s;"
+      <div data-session-id="${escapeHtml(s.id)}"
+           style="padding:10px 12px;border-radius:10px;cursor:pointer;transition:background 0.15s;
+                  border:1px solid transparent;margin-bottom:2px;"
            onmouseover="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.07)';"
            onmouseout="this.style.background='';this.style.borderColor='transparent';">
-        <div data-session-id="${escapeHtml(s.id)}" style="flex:1;min-width:0;cursor:pointer;">
-          <div style="font-size:12px;color:var(--text-dim);font-weight:500;white-space:nowrap;
-                      overflow:hidden;text-overflow:ellipsis;">
-            ${escapeHtml(s.title)}
-          </div>
-          <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${day} · ${time}</div>
+        <div style="font-size:12px;color:var(--text-dim);font-weight:500;white-space:nowrap;
+                    overflow:hidden;text-overflow:ellipsis;max-width:220px;">
+          ${escapeHtml(s.title)}
         </div>
-        <button data-delete-session="${escapeHtml(s.id)}"
-                style="flex-shrink:0;padding:4px;border-radius:6px;border:none;background:transparent;
-                       color:var(--text-faint);cursor:pointer;transition:color 0.15s,background 0.15s;
-                       display:flex;align-items:center;"
-                onmouseover="this.style.color='#f87171';this.style.background='rgba(239,68,68,0.1)';"
-                onmouseout="this.style.color='';this.style.background='';">
-          <span class="material-symbols-outlined" style="font-size:15px;">delete</span>
-        </button>
+        <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${day} · ${time}</div>
       </div>`;
   }).join('');
 
   historyListContainer.querySelectorAll('[data-session-id]').forEach(item => {
     item.addEventListener('click', () => {
       vscode.postMessage({ type: 'loadSession', id: item.getAttribute('data-session-id') });
+      // Fix: use .open class (matches CSS) instead of Tailwind -translate-x-full
       historySidebar?.classList.remove('open');
     });
   });
-
-  historyListContainer.querySelectorAll('[data-delete-session]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.getAttribute('data-delete-session');
-      if (vscode) vscode.postMessage({ type: 'deleteSession', id });
-      // Optimistically remove from UI
-      btn.closest('div[onmouseover]')?.remove();
-      if (!historyListContainer.querySelector('[data-session-id]')) {
-        renderHistory([]);
-      }
-    });
-  });
 }
-
 
 // ─── File / image upload ──────────────────────────────────────────────────────
 
