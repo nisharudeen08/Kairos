@@ -52,10 +52,10 @@ model_list:
 
   # ── CLOUD FALLBACK ────────────────────────────────
 
-  - model_name: "openrouter-mistral"
+  - model_name: "mistral-large"
     litellm_params:
-      model: "openrouter/mistralai/mistral-large"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      model: "mistral/mistral-large-latest"
+      api_key: "os.environ/MISTRAL_API_KEY"
       timeout: 60
 
   - model_name: "qwen3-coder"
@@ -66,8 +66,8 @@ model_list:
 
   - model_name: "codestral"
     litellm_params:
-      model: "openrouter/mistralai/codestral"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
+      model: "mistral/codestral-latest"
+      api_key: "os.environ/MISTRAL_API_KEY"
       timeout: 60
 
   - model_name: "hermes-3-405b"
