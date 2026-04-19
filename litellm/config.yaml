@@ -1,60 +1,42 @@
-# --- LiteLLM Proxy Configuration (D: DRIVE STABLE) -------------------------------
+# --- LiteLLM Proxy Configuration (D: DRIVE FINAL STABLE) -------------------------
 model_list:
 
-  # --- KAIROS R1 14B (Matches litellmModel in models.ts) ---
   - model_name: "kairos-r1-14b"
     litellm_params:
       model: "ollama/kairos-r1-14b:latest"
       api_base: "https://local-ai.pulsyra.com"
       timeout: 600
 
-  # --- DEEPSEEK R1 8B (Matches litellmModel in models.ts) ---
   - model_name: "deepseek-r1-8b"
     litellm_params:
-      model: "ollama/6995872bfe4c" # Using SHA for stability
+      model: "ollama/deepseek-r1:8b"
       api_base: "https://local-ai.pulsyra.com"
       timeout: 300
 
-  # --- 360 LIGHT (Matches litellmModel in models.ts) ---
   - model_name: "360-light"
     litellm_params:
       model: "ollama/360-light-local:latest"
       api_base: "https://local-ai.pulsyra.com"
       timeout: 600
 
-  # --- KWAICODER (Matches litellmModel in models.ts) ---
   - model_name: "kairos-coder"
     litellm_params:
       model: "ollama/fervent_mcclintock/KwaiCoder-DS-V2-Lite-Base:Q4_K_M"
       api_base: "https://local-ai.pulsyra.com"
       timeout: 300
 
-  # --- QWEN CODER WINDOWS (Matches litellmModel in models.ts) ---
   - model_name: "qwen-coder-win"
     litellm_params:
       model: "ollama/qwen2.5-coder:7b"
       api_base: "https://local-ai.pulsyra.com"
       timeout: 300
 
-  # --- GEMMA FAST (Matches litellmModel in models.ts) ---
   - model_name: "gemma-local-fast"
     litellm_params:
       model: "ollama/gemma:2b"
       api_base: "https://local-ai.pulsyra.com"
-      timeout: 60
 
-  # --- GEMMA SCOUT (Matches litellmModel in models.ts) ---
-  - model_name: "gemma-4-scout-local"
-    litellm_params:
-      model: "ollama/gemma:2b"
-      api_base: "https://local-ai.pulsyra.com"
-      timeout: 60
-
-# --- General (proxy-level) settings ---
+# --- General ---
 general_settings:
   disable_spend_logs: true
   no_auth: true
-
-litellm_settings:
-  drop_params: true
-  set_verbose: false
