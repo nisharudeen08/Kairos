@@ -54,8 +54,6 @@ const modelOptions = [
 
   // ── OPENROUTER (free tier) ──
   { value: 'llama-3.3-70b',         label: 'Llama 3.3 70B',             provider: 'OpenRouter', group: 'OpenRouter'  },
-  { value: 'gpt-oss-20b',           label: 'GPT-OSS 20B',               provider: 'OpenRouter', group: 'OpenRouter'  },
-  { value: 'gemma-3-27b',           label: 'Gemma 3 27B',               provider: 'OpenRouter', group: 'OpenRouter'  },
   { value: 'lfm-2.5-1.2b-thinking', label: 'LFM 2.5 Thinking',          provider: 'OpenRouter', group: 'OpenRouter'  },
 
   // ── GROQ ──
