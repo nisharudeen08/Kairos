@@ -55,37 +55,37 @@ model_list:
   - model_name: "openrouter-mistral"
     litellm_params:
       model: "openrouter/mistralai/mistral-large"
-      api_key: "os.environ/OPENROUTER_API_KEY"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
       timeout: 60
 
   - model_name: "qwen3-coder"
     litellm_params:
       model: "openrouter/qwen/qwen-2.5-coder-32b-instruct"
-      api_key: "os.environ/OPENROUTER_API_KEY"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
       timeout: 60
 
   - model_name: "codestral"
     litellm_params:
       model: "openrouter/mistralai/codestral-2501"
-      api_key: "os.environ/OPENROUTER_API_KEY"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
       timeout: 60
 
   - model_name: "hermes-3-405b"
     litellm_params:
       model: "openrouter/nousresearch/hermes-3-llama-3.1-405b"
-      api_key: "os.environ/OPENROUTER_API_KEY"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
       timeout: 60
 
   - model_name: "llama-3.3-70b"
     litellm_params:
       model: "openrouter/meta-llama/llama-3.3-70b-instruct"
-      api_key: "os.environ/OPENROUTER_API_KEY"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
       timeout: 60
 
   - model_name: "gpt-oss-20b"
     litellm_params:
       model: "openrouter/google/gemma-2-27b-it" # Fallback mapping
-      api_key: "os.environ/OPENROUTER_API_KEY"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
       timeout: 60
 
   - model_name: "gemini-2.5-flash"
@@ -97,7 +97,7 @@ model_list:
   - model_name: "gemma-3-27b"
     litellm_params:
       model: "openrouter/google/gemma-2-27b-it"
-      api_key: "os.environ/OPENROUTER_API_KEY"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
       timeout: 60
 
   - model_name: "groq-llama-3.3-70b"
@@ -109,7 +109,7 @@ model_list:
   - model_name: "github-deepseek-r1"
     litellm_params:
       model: "github/deepseek-r1"
-      api_key: "os.environ/GITHUB_TOKEN"
+      api_key: "os.environ/GITHUB_API_KEY"
       timeout: 120
 
   - model_name: "groq-qwen-qwq-32b"
@@ -121,7 +121,7 @@ model_list:
   - model_name: "lfm-2.5-1.2b-thinking"
     litellm_params:
       model: "openrouter/liquid/lfm-3b" # Approximate fallback
-      api_key: "os.environ/OPENROUTER_API_KEY"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
       timeout: 60
 
   - model_name: "groq-llama-3.1-8b"
@@ -133,7 +133,7 @@ model_list:
   - model_name: "github-gpt4o"
     litellm_params:
       model: "github/gpt-4o"
-      api_key: "os.environ/GITHUB_TOKEN"
+      api_key: "os.environ/GITHUB_API_KEY"
       timeout: 60
 
 router_settings:
