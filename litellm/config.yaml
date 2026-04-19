@@ -58,6 +58,24 @@ model_list:
       api_key: "os.environ/OPENROUTER_API_KEY"
       timeout: 60
 
+  - model_name: "qwen3-coder"
+    litellm_params:
+      model: "openrouter/qwen/qwen-2.5-coder-32b-instruct"
+      api_key: "os.environ/OPENROUTER_API_KEY"
+      timeout: 60
+
+  - model_name: "llama-3.3-70b"
+    litellm_params:
+      model: "openrouter/meta-llama/llama-3.3-70b-instruct"
+      api_key: "os.environ/OPENROUTER_API_KEY"
+      timeout: 60
+
+  - model_name: "gemini-2.5-flash"
+    litellm_params:
+      model: "gemini/gemini-1.5-flash"
+      api_key: "os.environ/GEMINI_API_KEY"
+      timeout: 60
+
   - model_name: "github-gpt4o"
     litellm_params:
       model: "github/gpt-4o"
@@ -75,6 +93,7 @@ general_settings:
 
 litellm_settings:
   drop_params: true
+
 
 
 
