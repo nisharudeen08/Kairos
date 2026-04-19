@@ -13,35 +13,35 @@ model_list:
       model: "ollama/qwen2.5-coder:7b"
       api_base: "https://ollama.pulsyra.com"
       timeout: 120
-      fallbacks: ["ollama/gemma:2b"]
+      timeout: 120
 
   - model_name: "deepseek-r1-8b"
     litellm_params:
       model: "ollama/deepseek-r1:8b"
       api_base: "https://ollama.pulsyra.com"
       timeout: 180
-      fallbacks: ["ollama/gemma:2b"]
+      timeout: 180
 
   - model_name: "kairos-r1-14b"
     litellm_params:
       model: "ollama/kairos-r1-14b:latest" # Use existing custom tag
       api_base: "https://ollama.pulsyra.com"
       timeout: 300
-      fallbacks: ["ollama/deepseek-r1:8b", "ollama/gemma:2b"]
+      fallbacks: ["ollama/deepseek-r1:8b"]
 
   - model_name: "360-light"
     litellm_params:
       model: "ollama/360-light-local:latest" # Use existing tag
       api_base: "https://ollama.pulsyra.com"
       timeout: 300
-      fallbacks: ["ollama/deepseek-r1:8b", "ollama/gemma:2b"]
+      fallbacks: ["ollama/deepseek-r1:8b"]
 
   - model_name: "kairos-coder"
     litellm_params:
       model: "ollama/fervent_mcclintock/KwaiCoder-DS-V2-Lite-Base:Q4_K_M"
       api_base: "https://ollama.pulsyra.com"
       timeout: 300
-      fallbacks: ["ollama/deepseek-r1:8b", "ollama/gemma:2b"]
+      fallbacks: ["ollama/deepseek-r1:8b"]
 
   - model_name: "gemma-4-scout-local"
     litellm_params:
