@@ -4,44 +4,42 @@ model_list:
 
   - model_name: "gemma-local-fast"
     litellm_params:
-      model: "ollama/b50d6c999e59" # gemma:2b
+      model: "ollama/gemma:2b"
       api_base: "https://ollama.pulsyra.com"
       timeout: 60
 
   - model_name: "qwen-coder-ubuntu"
     litellm_params:
-      model: "ollama/dae161e27b0e" # qwen2.5-coder:7b
+      model: "ollama/qwen2.5-coder:7b"
       api_base: "https://ollama.pulsyra.com"
       timeout: 120
-      fallbacks: ["ollama/6995872bfe4c"]
 
   - model_name: "deepseek-r1-8b"
     litellm_params:
-      model: "ollama/6995872bfe4c" # deepseek-r1:8b
+      model: "ollama/deepseek-r1:8b"
       api_base: "https://ollama.pulsyra.com"
-      timeout: 180
       timeout: 180
 
   - model_name: "kairos-r1-14b"
     litellm_params:
-      model: "ollama/24e632f0397f" # kairos-r1-14b
+      model: "ollama/kairos-r1-14b:latest"
       api_base: "https://ollama.pulsyra.com"
       timeout: 300
-      fallbacks: ["ollama/6995872bfe4c"]
+      fallbacks: ["ollama/deepseek-r1:8b"]
 
   - model_name: "360-light"
     litellm_params:
-      model: "ollama/ba2904cf5a2f" # 360-light
+      model: "ollama/360-light-local:latest"
       api_base: "https://ollama.pulsyra.com"
       timeout: 300
-      fallbacks: ["ollama/6995872bfe4c"]
+      fallbacks: ["ollama/deepseek-r1:8b"]
 
   - model_name: "kairos-coder"
     litellm_params:
-      model: "ollama/f28929c8cd75" # kwaicoder
+      model: "ollama/fervent_mcclintock/KwaiCoder-DS-V2-Lite-Base:Q4_K_M"
       api_base: "https://ollama.pulsyra.com"
       timeout: 300
-      fallbacks: ["ollama/6995872bfe4c"]
+      fallbacks: ["ollama/deepseek-r1:8b"]
 
   - model_name: "gemma-4-scout-local"
     litellm_params:
