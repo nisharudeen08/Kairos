@@ -115,31 +115,32 @@ class AntigravityToolWindow(private val project: Project) {
     }
 
     private fun handleJsMessage(json: String) {
-        // Extract basic info manually to avoid GSON dependency issues in this environment
         if (json.contains("\"userMessage\"")) {
-            val textStart = json.indexOf("\"text\":\"") + 8
-            val textEnd = json.indexOf("\"", textStart)
-            val prompt = json.substring(textStart, textEnd)
+            // Use regex for robust parsing — avoids truncation on special chars
+            val promptMatch = Regex("\"text\":\"(.*?)\"").find(json)
+            val prompt = promptMatch?.groupValues?.getOrNull(1) ?: return
 
-            val modelStart = json.indexOf("\"model\":\"") + 9
-            val modelEnd = json.indexOf("\"", modelStart)
-            val selectedModel = if (modelStart > 8) json.substring(modelStart, modelEnd) else "gpt-oss-120b"
+            val modelMatch = Regex("\"model\":\"([^\"]+)\"").find(json)
+            // Fallback to gpt-oss-20b which is always in our config
+            val selectedModel = modelMatch?.groupValues?.getOrNull(1) ?: "gpt-oss-20b"
 
-            // For now, solve synchronously and post back to JS
-            // In a real version, we would background this and use browser.executeJavaScript()
             Thread {
                 val responseJson = client.completeSync(selectedModel, prompt)
-                
-                // Extract only the content from the response JSON (LiteLLM format)
-                // {"choices":[{"message":{"content":"..."}}]}
-                val contentStart = responseJson.indexOf("\"content\":\"") + 11
-                val contentEnd = responseJson.indexOf("\"", contentStart)
-                val content = if (contentStart > 10) responseJson.substring(contentStart, contentEnd) else "Error: Model response failed"
 
-                // Pass back to Webview
+                // Extract content — use DOTALL-equivalent to handle multi-line responses
+                val contentMatch = Regex("\"content\":\"(.*?)\"", RegexOption.DOT_MATCHES_ALL).find(responseJson)
+                val rawContent = contentMatch?.groupValues?.getOrNull(1) ?: "Error: Model response failed"
+
+                // Escape for safe JS injection
+                val content = rawContent
+                    .replace("\\", "\\\\")
+                    .replace("\n", "\\n")
+                    .replace("\r", "")
+                    .replace("\"", "\\\"")
+
                 val js = "window.antigravityReceiveMessage({ \"type\": \"token\", \"content\": \"$content\" });" +
                          "window.antigravityReceiveMessage({ \"type\": \"done\", \"metadata\": { \"agent\": \"Planner\", \"modelLabel\": \"${selectedModel.uppercase()}\", \"confidence\": \"High\", \"modelReason\": \"Local Proxy\" } });"
-                
+
                 browser.cefBrowser.executeJavaScript(js, browser.cefBrowser.url, 0)
             }.start()
         }
