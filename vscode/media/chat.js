@@ -2,76 +2,85 @@ let vscode;
 try {
   vscode = acquireVsCodeApi();
 } catch (e) {
-  // Already acquired or environment issue
   vscode = /** @type {any} */ (window).vscodeApi;
 }
 if (vscode) {
   /** @type {any} */ (window).vscodeApi = vscode;
 }
 
+
+function safeRender(raw) {
+  const html = (typeof marked !== 'undefined')
+    ? marked.parse(raw || '')
+    : (raw || '').replace(/</g, '&lt;');
+  return (typeof DOMPurify !== 'undefined')
+    ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
+    : html;
+}
+
+let _scrollPending = false;
+function scheduleScroll() {
+  if (_scrollPending) return;
+  _scrollPending = true;
+  requestAnimationFrame(() => {
+    const msgEl = document.getElementById('messages');
+    if (msgEl) msgEl.scrollTop = msgEl.scrollHeight;
+    _scrollPending = false;
+  });
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const modeOptions = [
-  { value: 'agent', label: 'Agent',  icon: 'smart_toy',    color: 'rose'    },
-  { value: 'fast',  label: 'Fast',   icon: 'bolt',         color: 'indigo'  },
-  { value: 'ask',   label: 'Ask',    icon: 'help_outline', color: 'emerald' },
-  { value: 'plan',  label: 'Plan',   icon: 'architecture', color: 'amber'   },
+  { value: 'agent',      label: 'Agent',       icon: 'smart_toy',    color: 'rose'    },
+  { value: 'agent-full', label: 'Agent Full',  icon: 'shield',       color: 'rose'    },
+  { value: 'fast',       label: 'Fast',        icon: 'bolt',         color: 'indigo'  },
+  { value: 'ask',        label: 'Ask',         icon: 'help_outline', color: 'emerald' },
+  { value: 'plan',       label: 'Plan',        icon: 'architecture', color: 'amber'   },
 ];
 
 const modelOptions = [
-  // ── AUTO (AI picks best model based on task) ──
-  { value: "auto",              label: "Auto (AI picks)",         provider: "Auto",       group: "Auto" },
+  // ── AUTO ──
+  { value: 'auto',                  label: 'Auto (AI picks)',          provider: 'Auto',       group: 'Auto'       },
 
-  // ── AUTOCOMPLETE (OpenRouter) ──
-  { value: "step-3.5-flash",       label: "Step 3.5 Flash",          provider: "OpenRouter", group: "Autocomplete" },
-  { value: "gpt-oss-20b",          label: "GPT-OSS 20B",             provider: "OpenRouter", group: "Autocomplete" },
-  { value: "nemotron-nano-9b",     label: "Nemotron Nano 9B",        provider: "OpenRouter", group: "Autocomplete" },
-  { value: "arcee-trinity-mini",   label: "Arcee Trinity Mini",      provider: "OpenRouter", group: "Autocomplete" },
+  // ── LOCAL (Ollama → ollama.pulsyra.com) ──
+  { value: 'gemma-local-fast',      label: 'Gemma 2B (Fast)',          provider: 'Local',      group: 'Local'      },
+  { value: 'qwen-coder-ubuntu',     label: 'Qwen 2.5 Coder 7B',        provider: 'Local',      group: 'Local'      },
+  { value: 'deepseek-r1-8b',        label: 'DeepSeek R1 8B',           provider: 'Local',      group: 'Local'      },
+  { value: 'kairos-r1-14b',         label: 'Kairos R1 14B',            provider: 'Local',      group: 'Local'      },
+  { value: '360-light',             label: '360 Light',                provider: 'Local',      group: 'Local'      },
+  { value: 'kairos-coder',          label: 'KwaiCoder DS Lite',         provider: 'Local',      group: 'Local'      },
+  { value: 'gemma-4-scout-local',   label: 'Gemma Scout Local',         provider: 'Local',      group: 'Local'      },
 
-  // ── CHAT (OpenRouter) ──
-  { value: "llama-3.3-70b",        label: "Llama 3.3 70B",           provider: "OpenRouter", group: "Chat" },
-  { value: "hermes-3-405b",        label: "Hermes 3 405B",           provider: "OpenRouter", group: "Chat" },
-  { value: "gemma-3-27b",          label: "Gemma 3 27B",             provider: "OpenRouter", group: "Chat" },
-  { value: "gemma-4-31b",          label: "Gemma 4 31B",             provider: "OpenRouter", group: "Chat" },
+  // ── OPENROUTER (free tier) ──
+  { value: 'llama-3.3-70b',         label: 'Llama 3.3 70B',             provider: 'OpenRouter', group: 'OpenRouter'  },
+  { value: 'gpt-oss-20b',           label: 'GPT-OSS 20B',               provider: 'OpenRouter', group: 'OpenRouter'  },
+  { value: 'gemma-3-27b',           label: 'Gemma 3 27B',               provider: 'OpenRouter', group: 'OpenRouter'  },
+  { value: 'lfm-2.5-1.2b-thinking', label: 'LFM 2.5 Thinking',          provider: 'OpenRouter', group: 'OpenRouter'  },
 
-  // ── CODING (OpenRouter) ──
-  { value: "qwen3-coder",          label: "Qwen3 Coder 480B ⭐",     provider: "OpenRouter", group: "Coding" },
-  { value: "qwen3-next-80b",       label: "Qwen3 Next 80B",          provider: "OpenRouter", group: "Coding" },
-  { value: "nemotron-3-super",     label: "Nemotron 3 Super 120B",   provider: "OpenRouter", group: "Coding" },
-  { value: "gpt-oss-120b",         label: "GPT-OSS 120B",            provider: "OpenRouter", group: "Coding" },
-
-  // ── VISION (OpenRouter) ──
-  { value: "nemotron-nano-12b-vl", label: "Nemotron Nano 12B VL",    provider: "OpenRouter", group: "Vision" },
-  { value: "gemma-4-26b-vision",   label: "Gemma 4 26B Vision",      provider: "OpenRouter", group: "Vision" },
-
-  // ── SPECIALIST (OpenRouter) ──
-  { value: "dolphin-mistral-24b",  label: "Dolphin Mistral 24B",     provider: "OpenRouter", group: "Specialist" },
-  { value: "lfm-2.5-1.2b-thinking",label: "LFM 2.5 1.2B Thinking",  provider: "OpenRouter", group: "Specialist" },
-
-  // ── GROQ (fastest) ──
-  { value: "groq-llama-3.1-8b",   label: "⚡ Llama 3.1 8B",         provider: "Groq",       group: "Groq" },
-  { value: "groq-llama-3.3-70b",  label: "⚡ Llama 3.3 70B",        provider: "Groq",       group: "Groq" },
-  { value: "groq-llama-4-scout",  label: "⚡ Llama 4 Scout",         provider: "Groq",       group: "Groq" },
-  { value: "groq-qwen-qwq-32b",   label: "⚡ Qwen QwQ 32B",          provider: "Groq",       group: "Groq" },
+  // ── GROQ ──
+  { value: 'groq-llama-3.1-8b',    label: 'Llama 3.1 8B',              provider: 'Groq',       group: 'Groq'        },
+  { value: 'groq-llama-3.3-70b',   label: 'Llama 3.3 70B',             provider: 'Groq',       group: 'Groq'        },
+  { value: 'groq-qwen-qwq-32b',    label: 'Qwen QwQ 32B',              provider: 'Groq',       group: 'Groq'        },
 
   // ── MISTRAL ──
-  { value: "codestral",            label: "Codestral ⭐",             provider: "Mistral",    group: "Mistral" },
-  { value: "mistral-small",        label: "Mistral Small",           provider: "Mistral",    group: "Mistral" },
-  { value: "devstral-small",       label: "Devstral Small",          provider: "Mistral",    group: "Mistral" },
+  { value: 'codestral',             label: 'Codestral',                 provider: 'Mistral',    group: 'Mistral'     },
+  { value: 'mistral-large',         label: 'Mistral Large',             provider: 'Mistral',    group: 'Mistral'     },
 
   // ── GEMINI ──
-  { value: "gemini-2.5-flash-lite",label: "Gemini 2.5 Flash Lite",  provider: "Gemini",     group: "Gemini" },
-  { value: "gemini-2.5-flash",     label: "Gemini 2.5 Flash",       provider: "Gemini",     group: "Gemini" },
-  { value: "gemini-2.5-pro",       label: "Gemini 2.5 Pro",         provider: "Gemini",     group: "Gemini" },
+  { value: 'gemini-2.5-flash',      label: 'Gemini 2.5 Flash',          provider: 'Gemini',     group: 'Gemini'      },
 
-  // ── GITHUB MODELS ──
-  { value: "github-gpt-4o-mini",   label: "GPT-4o Mini",            provider: "GitHub",     group: "GitHub" },
-  { value: "github-llama-3.3-70b", label: "Llama 3.3 70B",          provider: "GitHub",     group: "GitHub" },
-  { value: "github-deepseek-r1",   label: "DeepSeek R1",            provider: "GitHub",     group: "GitHub" },
+  // ── GITHUB ──
+  { value: 'github-gpt4o',          label: 'GPT-4o',                    provider: 'GitHub',     group: 'GitHub'      },
+  { value: 'github-deepseek-r1',    label: 'DeepSeek R1',               provider: 'GitHub',     group: 'GitHub'      },
 ];
 
+
 // Models that support reasoning — show reasoning toggle only for these
-const REASONING_MODELS = new Set(['groq-qwen-qwq-32b', 'lfm-2.5-1.2b-thinking', 'github-deepseek-r1']);
+const REASONING_MODELS = new Set([
+  'groq-qwen-qwq-32b', 'lfm-2.5-1.2b-thinking', 'github-deepseek-r1',
+  'deepseek-r1-8b', 'kairos-r1-14b',
+]);
 
 const reasoningLabels = ['Low', 'Med', 'High'];
 
@@ -88,6 +97,11 @@ let currentModelIndex     = 0;  // 0 = Auto (first entry)
 let currentReasoningLevel = 1;  // 1 | 2 | 3
 
 /** @type {string[]} */ let pendingImages = [];
+/** @type {Array<{userText: string, wrapperEl: HTMLElement}>} */
+let messageHistory = [];
+let messageIndex   = 0;
+let lastUserText   = '';
+/** @type {HTMLElement | null} */ let lastUserWrapper = null;
 
 // ─── DOM Refs ─────────────────────────────────────────────────────────────────
 
@@ -128,8 +142,6 @@ const modelDropdown       = document.getElementById('model-dropdown');
 const modeList            = document.getElementById('mode-list');
 const modelList           = document.getElementById('model-list');
 
-// Tell the extension host we're mounted — it will replay current session history
-if (vscode) vscode.postMessage({ type: 'ready' });
 
 // ─── Send / Stop ──────────────────────────────────────────────────────────────
 
@@ -138,62 +150,119 @@ if (vscode) vscode.postMessage({ type: 'ready' });
 document.addEventListener('click', (e) => {
   const target = /** @type {HTMLElement} */ (e.target);
 
-  // 1. Selector Buttons
-  const targetModeBtn = target.closest('#mode-selector-btn');
-  if (targetModeBtn) {
-    e.stopPropagation();
-    const mDrop = modeDropdown || document.getElementById('mode-dropdown');
-    const lDrop = modelDropdown || document.getElementById('model-dropdown');
-    mDrop?.classList.toggle('hidden');
-    lDrop?.classList.add('hidden');
+  // ── Hint chips ──────────────────────────────────────────
+  const hintChip = target.closest('.hint-chip');
+  if (hintChip) {
+    const text = hintChip.querySelector(
+      'span:not(.material-symbols-outlined)')?.textContent;
+    if (text) fillInput(text);
     return;
   }
 
-  const targetModelBtn = target.closest('#model-selector-btn');
-  if (targetModelBtn) {
+  // ── Mode pill ───────────────────────────────────────────
+  if (target.closest('#mode-selector-btn')) {
     e.stopPropagation();
-    const mDrop = modeDropdown || document.getElementById('mode-dropdown');
-    const lDrop = modelDropdown || document.getElementById('model-dropdown');
-    lDrop?.classList.toggle('hidden');
-    mDrop?.classList.add('hidden');
+    modeDropdown?.classList.toggle('hidden');
+    modelDropdown?.classList.add('hidden');
     return;
   }
 
-  const targetReasoningBtn = target.closest('#reasoning-selector-btn');
-  if (targetReasoningBtn) {
+  // ── Model pill ──────────────────────────────────────────
+  if (target.closest('#model-selector-btn')) {
+    e.stopPropagation();
+    modelDropdown?.classList.toggle('hidden');
+    modeDropdown?.classList.add('hidden');
+    return;
+  }
+
+  // ── Reasoning pill ──────────────────────────────────────
+  if (target.closest('#reasoning-selector-btn')) {
     currentReasoningLevel = (currentReasoningLevel % 3) + 1;
     syncControls();
-    updateTokenEstimate();
+    updateTokenEstimate(); // keep this or whatever might be needed
     return;
   }
 
-  // 2. Main Action Buttons
+  // ── Sidebar close on outside click ──────────────────────
+  if (historySidebar?.classList.contains('open')) {
+    if (!historySidebar.contains(target) &&
+        !target.closest('#btn-history')) {
+      historySidebar.classList.remove('open');
+    }
+  }
+
+  // ── Close dropdowns (only if click was outside them) ────
+  if (!target.closest('#mode-dropdown') &&
+      !target.closest('#mode-selector-btn')) {
+    modeDropdown?.classList.add('hidden');
+  }
+  if (!target.closest('#model-dropdown') &&
+      !target.closest('#model-selector-btn')) {
+    modelDropdown?.classList.add('hidden');
+  }
+
+  // ── Main buttons ────────────────────────────────────────
   if (target.closest('#btn-send'))     { handleSend(); return; }
-  if (target.closest('#btn-stop'))     { if (streamAbortController) { streamAbortController.abort(); streamAbortController = null; } handleDone(true); return; }
-  if (target.closest('#btn-clear'))    { if (vscode) { vscode.postMessage({ type: 'clearChat' }); } else { appendSystemMessage('❌ Error: VS Code API not found. Please reload.'); } return; }
-  if (target.closest('#btn-settings')) { if (vscode) vscode.postMessage({ type: 'openSettings' }); return; }
-  if (target.closest('#btn-new-chat')) { if (vscode) vscode.postMessage({ type: 'clearChat' }); appendSystemMessage('✨ New conversation started.'); return; }
-  
-  // 3. Navigation / Panel Buttons
+  if (target.closest('#btn-stop')) {
+    if (streamAbortController) {
+      streamAbortController.abort();
+      streamAbortController = null;
+    }
+    handleDone(true);
+    return;
+  }
+  if (target.closest('#btn-clear')) {
+    if (vscode) vscode.postMessage({ type: 'clearChat' });
+    return;
+  }
+  if (target.closest('#btn-settings')) {
+    if (vscode) vscode.postMessage({ type: 'openSettings' });
+    return;
+  }
+  if (target.closest('#btn-new-chat')) {
+    if (vscode) vscode.postMessage({ type: 'clearChat' });
+    appendSystemMessage('✨ New conversation started.');
+    return;
+  }
+
+  // ── History ─────────────────────────────────────────────
   if (target.closest('#btn-history')) {
     historySidebar?.classList.add('open');
     if (vscode) vscode.postMessage({ type: 'getHistory' });
     return;
   }
-  if (target.closest('#btn-close-history')) { historySidebar?.classList.remove('open'); return; }
-  
-  // 4. Action Bar
-  if (target.closest('#btn-changes'))  { if (vscode) vscode.postMessage({ type: 'openChanges' }); appendSystemMessage('📂 Opening Source Control...'); return; }
-  if (target.closest('#btn-terminal')) { if (vscode) vscode.postMessage({ type: 'openTerminal' }); appendSystemMessage('💻 Toggling terminal...'); return; }
-  if (target.closest('#btn-artifacts')){ if (vscode) vscode.postMessage({ type: 'openArtifacts' }); appendSystemMessage('📁 Opening Explorer...'); return; }
-  if (target.closest('#btn-web'))      { if (vscode) vscode.postMessage({ type: 'openWeb' }); appendSystemMessage('🌐 Opening browser...'); return; }
-  if (target.closest('#btn-review-changes')) { if (vscode) vscode.postMessage({ type: 'reviewChanges' }); appendSystemMessage('🔍 Opening Review Changes...'); return; }
+  if (target.closest('#btn-close-history')) {
+    historySidebar?.classList.remove('open');
+    return;
+  }
 
-  // 5. Uploads
+  // ── Action bar ───────────────────────────────────────────
+  if (target.closest('#btn-changes')) {
+    if (vscode) vscode.postMessage({ type: 'openChanges' });
+    return;
+  }
+  if (target.closest('#btn-terminal')) {
+    if (vscode) vscode.postMessage({ type: 'openTerminal' });
+    return;
+  }
+  if (target.closest('#btn-artifacts')) {
+    if (vscode) vscode.postMessage({ type: 'openArtifacts' });
+    return;
+  }
+  if (target.closest('#btn-web')) {
+    if (vscode) vscode.postMessage({ type: 'openWeb' });
+    return;
+  }
+  if (target.closest('#btn-review-changes')) {
+    if (vscode) vscode.postMessage({ type: 'reviewChanges' });
+    return;
+  }
+
+  // ── File upload triggers ─────────────────────────────────
   if (target.closest('#btn-file-upload'))  { fileInput?.click(); return; }
   if (target.closest('#btn-image-upload')) { imageInput?.click(); return; }
-
-  // 6. Inline Message Buttons (Copy etc)
+  
+  // ── Inline Message Buttons (Copy etc) ───────────────────
   const copyMsgBtn = target.closest('.copy-msg-btn');
   if (copyMsgBtn) {
     // handled in createCopyMessageButton
@@ -202,23 +271,6 @@ document.addEventListener('click', (e) => {
 });
 
 // ─── Input Handlers ───────────────────────────────────────────────────────────
-
-// Auto-grow textarea + token estimate
-inputEl?.addEventListener('input', () => {
-  const el = inputEl || /** @type {HTMLTextAreaElement} */ (document.getElementById('user-input'));
-  if (el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 180) + 'px';
-  }
-  updateTokenEstimate();
-});
-
-inputEl?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    handleSend();
-  }
-});
 
 // Added a separate delegation for the case where inputEl was null at start
 document.addEventListener('input', (e) => {
@@ -238,61 +290,38 @@ document.addEventListener('keydown', (e) => {
 
 // ─── Top-bar & controls ───────────────────────────────────────────────────────
 
-settingsBtn?.addEventListener('click', () => vscode.postMessage({ type: 'openSettings' }));
-clearBtn?.addEventListener('click',    () => vscode.postMessage({ type: 'clearChat' }));
 
-historyBtn?.addEventListener('click', () => {
-  // Use .open class — matches CSS: #history-sidebar.open { transform: translateX(0) }
-  historySidebar?.classList.add('open');
-  vscode.postMessage({ type: 'getHistory' });
-});
-closeHistoryBtn?.addEventListener('click', () => historySidebar?.classList.remove('open'));
-// Also close sidebar when clicking outside it
-document.addEventListener('click', (e) => {
-  if (historySidebar?.classList.contains('open')) {
-    if (!historySidebar.contains(/** @type {Node} */ (e.target)) &&
-        e.target !== historyBtn) {
-      historySidebar.classList.remove('open');
-    }
-  }
-});
 
-newChatBtn?.addEventListener('click', () => {
-  vscode.postMessage({ type: 'clearChat' });
-  appendSystemMessage('✨ New conversation started.');
-});
-
-fileUploadBtn?.addEventListener('click',  () => fileInput?.click());
-imageUploadBtn?.addEventListener('click', () => imageInput?.click());
 fileInput?.addEventListener('change',  handleFileSelect);
 imageInput?.addEventListener('change', handleImageSelect);
 
+// ─── Clipboard Paste → Image attach ───────────────────────────────────────────
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of Array.from(items)) {
+    if (!item.type.startsWith('image/')) continue;
+    e.preventDefault();
+    const blob = item.getAsFile();
+    if (!blob) continue;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result?.toString();
+      if (!dataUrl) return;
+      pendingImages.push(dataUrl);
+      appendSystemMessage(
+        `<span class="flex items-center gap-1.5 text-emerald-400">` +
+        `<span class="material-symbols-outlined text-[13px]">image</span>` +
+        `Image pasted — ready to send</span>`
+      );
+    };
+    reader.readAsDataURL(blob);
+    break; // one image per paste
+  }
+});
+
 // ─── Action Bar Button Handlers ───────────────────────────────────────────────
 
-changesBtn?.addEventListener('click', () => {
-  vscode.postMessage({ type: 'openChanges' });
-  appendSystemMessage('📂 Opening Source Control panel...');
-});
-
-terminalBtn?.addEventListener('click', () => {
-  vscode.postMessage({ type: 'openTerminal' });
-  appendSystemMessage('💻 Toggling terminal...');
-});
-
-artifactsBtn?.addEventListener('click', () => {
-  vscode.postMessage({ type: 'openArtifacts' });
-  appendSystemMessage('📁 Opening Explorer...');
-});
-
-webBtn?.addEventListener('click', () => {
-  vscode.postMessage({ type: 'openWeb' });
-  appendSystemMessage('🌐 Opening browser...');
-});
-
-reviewChangesBtn?.addEventListener('click', () => {
-  vscode.postMessage({ type: 'reviewChanges' });
-  appendSystemMessage('🔍 Opening git diff / Review Changes...');
-});
 
 // ─── Dropdowns ────────────────────────────────────────────────────────────────
 
@@ -311,24 +340,7 @@ modelList?.addEventListener('click', (e) => {
   if (item) setModel(parseInt(item.getAttribute('data-index') || '0', 10));
 });
 
-// Close dropdowns on outside click — single listener
-document.addEventListener('click', () => {
-  modeDropdown?.classList.add('hidden');
-  modelDropdown?.classList.add('hidden');
-});
 
-// Event delegation for hint chips and other dynamic elements
-document.addEventListener('click', (e) => {
-  const target = /** @type {HTMLElement} */ (e.target);
-  
-  // Hint chips
-  const hintChip = target.closest('.hint-chip');
-  if (hintChip) {
-    const text = hintChip.querySelector('span:not(.material-symbols-outlined)')?.textContent;
-    if (text) fillInput(text);
-    return;
-  }
-});
 
 // ─── VS Code message bus ──────────────────────────────────────────────────────
 
@@ -344,8 +356,12 @@ window.addEventListener('message', (event) => {
     case 'fileChange':      appendFileReview(msg.path, msg.content); break;
     case 'historyList':     renderHistory(msg.sessions); break;
     // Session replay — visually reconstruct past conversation
-    case 'replayUser':      replayUserMessage(msg.text); break;
-    case 'replayAssistant': replayAssistantMessage(msg.text); break;
+    case 'replayUser':
+      replayUserMessage(msg.text);
+      break;
+    case 'replayAssistant':
+      replayAssistantMessage(msg.text);
+      break;
     case 'permissionRequest': showPermissionDialog(msg.scope, msg.detail); break;
   }
 });
@@ -382,7 +398,7 @@ function buildDropdowns() {
                class="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 cursor-pointer rounded-lg transition-colors text-[11px] ${
                  isAuto ? 'text-violet-300 font-semibold' : 'text-slate-300'
                } hover:text-white">
-            ${isAuto ? '🤖' : `<span class="opacity-40 text-[9px] font-mono mr-1">[${opt.provider}]</span>`}
+            <span class="opacity-30 text-[9px] font-mono w-14 shrink-0 text-right">${opt.provider}</span>
             ${opt.label}
           </div>
         `).join('')}
@@ -469,7 +485,9 @@ function handleSend() {
   if (!text || isStreaming) return;
 
   removeEmptyState();
-  appendUserMessage(text);
+  const userWrapper = appendUserMessage(text);
+  lastUserText = text;
+  lastUserWrapper = userWrapper;
 
   input.value = '';
   input.style.height = 'auto';
@@ -477,6 +495,11 @@ function handleSend() {
   if (tokens) tokens.textContent = '';
 
   streamAbortController = new AbortController();
+
+  // Capture images to send — then clear so next message starts fresh
+  const imagesToSend = [...pendingImages];
+  pendingImages = [];
+
   beginStream();
 
   if (vscode) {
@@ -487,9 +510,8 @@ function handleSend() {
         mode:           modeOptions[currentModeIndex].value,
         model:          modelOptions[currentModelIndex].value,
         reasoningLevel: currentReasoningLevel,
-        images:         pendingImages,
+        images:         imagesToSend,
       });
-      pendingImages = [];
     } catch (err) {
       console.error('Failed to post message', err);
       handleDone(true); // reset UI state
@@ -538,14 +560,24 @@ function handleToken(content) {
     streamTarget.removeChild(cursorEl);
   }
 
-  streamTarget.innerHTML = renderMarkdown(streamBuffer);
+  streamTarget.innerHTML = safeRender(streamBuffer);
 
   // Re-attach cursor at end
   if (cursorEl) {
     streamTarget.appendChild(cursorEl);
   }
 
-  scrollToBottom();
+  // ── Dynamic thinking preview ───────────────────────────────────────────
+  const thinkBar = document.getElementById('thinking-preview');
+  if (thinkBar) {
+    // Show the last 120 chars of the current stream as a live preview
+    const preview = streamBuffer.replace(/```[\s\S]*?```/g, '').trim();
+    const tail = preview.slice(-120).replace(/\n/g, ' ');
+    thinkBar.textContent = tail || '...';
+    thinkBar.parentElement?.classList.remove('hidden');
+  }
+
+  scheduleScroll();
 }
 
 /**
@@ -554,6 +586,19 @@ function handleToken(content) {
  */
 function handleDone(aborted = false, metadata = null) {
   isStreaming = false;
+  
+  // Record this completed exchange for rollback (skip if user aborted)
+  const streamMsgEl = document.getElementById('stream-message');
+  const rollbackIndex = messageHistory.length; // capture BEFORE push
+  if (streamMsgEl && !aborted) {
+    messageHistory.push({
+      userText: lastUserText,
+      wrapperEl: streamMsgEl,
+      userEl: lastUserWrapper,
+    });
+    messageIndex = messageHistory.length;
+  }
+  
   streamAbortController = null;
 
   if (sendBtn) sendBtn.disabled = false;
@@ -565,17 +610,21 @@ function handleDone(aborted = false, metadata = null) {
   cursorEl = null;
 
   if (streamTarget) {
-    streamTarget.innerHTML = renderMarkdown(streamBuffer);
+    streamTarget.innerHTML = safeRender(streamBuffer);
     // Attach copy buttons to code blocks
     attachCodeCopyButtons(streamTarget);
   }
 
-  // Add copy-message button to the bubble
+  // Add copy, edit, and rollback buttons to the bubble
   const streamMsg = document.getElementById('stream-message');
   if (streamMsg) {
     const bubble = streamMsg.querySelector('.stream-bubble');
     if (bubble) {
-      const copyBtn = createCopyMessageButton(streamBuffer);
+      const copyBtn     = createCopyMessageButton(streamBuffer);
+      const editBtn     = createEditButton(lastUserText);
+      const rollbackBtn = createRollbackButton(rollbackIndex);
+      bubble.appendChild(rollbackBtn);
+      bubble.appendChild(editBtn);
       bubble.appendChild(copyBtn);
     }
     streamMsg.id = '';
@@ -585,6 +634,13 @@ function handleDone(aborted = false, metadata = null) {
     appendSystemMessage('Generation stopped.');
   } else if (metadata) {
     appendAgentMeta(metadata);
+  }
+
+  // Hide the thinking preview bar when done
+  const thinkBar = document.getElementById('thinking-preview');
+  if (thinkBar) {
+    thinkBar.parentElement?.classList.add('hidden');
+    thinkBar.textContent = '';
   }
 
   streamBuffer = '';
@@ -618,7 +674,10 @@ function handleError(message) {
 
 // ─── Message renderers ────────────────────────────────────────────────────────
 
-/** @param {string} text */
+/**
+ * @param {string} text
+ * @returns {HTMLElement}
+ */
 function appendUserMessage(text) {
   const wrapper = createEl('div', 'flex flex-col items-end w-full gap-1 animation-slide-up');
   const bubble  = createEl('div',
@@ -627,20 +686,37 @@ function appendUserMessage(text) {
   bubble.textContent = text;
   wrapper.appendChild(bubble);
 
-  // Render pending image previews
+  // Render pending attachment previews
   if (pendingImages.length > 0) {
-    const previews = createEl('div', 'flex flex-wrap gap-1 mt-1');
+    const previews = createEl('div', 'flex flex-wrap gap-2 mt-1');
     pendingImages.forEach(src => {
-      const img = /** @type {HTMLImageElement} */ (document.createElement('img'));
-      img.src = src;
-      img.className = 'w-16 h-16 object-cover rounded-lg border border-white/10';
-      previews.appendChild(img);
+      if (src.startsWith('data:image/')) {
+        // Real image — show thumbnail
+        const img = /** @type {HTMLImageElement} */ (document.createElement('img'));
+        img.src = src;
+        img.className = 'w-16 h-16 object-cover rounded-lg border border-white/10';
+        previews.appendChild(img);
+      } else {
+        // File attachment — show filename pill instead of broken <img>
+        const namePart = src.split(';').find(p => p.startsWith('name='));
+        const fileName = namePart
+          ? decodeURIComponent(namePart.replace('name=', ''))
+          : 'file';
+        const pill = createEl('div',
+          'flex items-center gap-1.5 px-2 py-1 rounded-lg ' +
+          'bg-white/8 border border-white/10 text-[10px] text-slate-300');
+        pill.innerHTML =
+          '<span class="material-symbols-outlined text-[13px] text-primary">attach_file</span>' +
+          escapeHtml(fileName);
+        previews.appendChild(pill);
+      }
     });
     wrapper.appendChild(previews);
   }
 
   messagesEl.appendChild(wrapper);
   scrollToBottom();
+  return wrapper;
 }
 
 /** @param {string} text */
@@ -699,7 +775,7 @@ function replayAssistantMessage(text) {
 
   const content = document.createElement('div');
   content.style.cssText = 'font-size:13px;line-height:1.75;color:var(--text);';
-  content.innerHTML = renderMarkdown(text);
+  content.innerHTML = safeRender(text);
   attachCodeCopyButtons(content);
 
   const copyBtn = createCopyMessageButton(text);
@@ -756,6 +832,50 @@ function createCopyMessageButton(rawMarkdown) {
   return btn;
 }
 
+/** @param {string} userText */
+function createEditButton(userText) {
+  const btn = createEl('button',
+    'edit-msg-btn absolute top-2 right-10 p-1.5 rounded-lg bg-white/0 hover:bg-white/10 ' +
+    'text-slate-600 hover:text-slate-300 transition-all opacity-0 group-hover:opacity-100');
+  btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">edit</span>';
+  btn.title = 'Edit & resend';
+  btn.addEventListener('click', () => {
+    if (!inputEl) return;
+    // Restore the user's message for this specific turn
+    inputEl.value = userText;
+    inputEl.focus();
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + 'px';
+    updateTokenEstimate();
+    // Scroll input into view
+    inputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+  return btn;
+}
+
+/** @param {number} index */
+function createRollbackButton(index) {
+  const btn = createEl('button',
+    'rollback-msg-btn absolute top-2 right-[4.5rem] p-1.5 rounded-lg bg-white/0 hover:bg-white/10 ' +
+    'text-slate-600 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100');
+  btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">history</span>';
+  btn.title = 'Rollback to before this response';
+  btn.addEventListener('click', () => {
+    if (!confirm('Remove this response and everything after it?')) return;
+    // Remove all message wrappers from this index onward
+    for (let i = index; i < messageHistory.length; i++) {
+      messageHistory[i]?.wrapperEl?.remove();
+      messageHistory[i]?.userEl?.remove();
+    }
+    messageHistory = messageHistory.slice(0, index);
+    messageIndex   = messageHistory.length;
+    // Tell the host to rollback history too
+    if (vscode) vscode.postMessage({ type: 'clearChat' });
+    appendSystemMessage('↩ Rolled back. History cleared — start fresh.');
+  });
+  return btn;
+}
+
 /** @param {HTMLElement} container */
 function attachCodeCopyButtons(container) {
   container.querySelectorAll('.code-block-wrapper').forEach((wrapper) => {
@@ -781,168 +901,40 @@ function attachCodeCopyButtons(container) {
   });
 }
 
-// ─── Markdown renderer ────────────────────────────────────────────────────────
-
-/** @param {string} text */
-function renderMarkdown(text) {
-  // Step 1: Extract and protect fenced code blocks
-  const codeBlocks = [];
-  let safe = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-    const langLabel = lang || 'text';
-    const idx = codeBlocks.length;
-    codeBlocks.push({ lang: langLabel, code: code.trim() });
-    return `%%CODE_BLOCK_${idx}%%`;
-  });
-
-  // Step 2: Escape HTML in the non-code parts
-  safe = escapeHtml(safe);
-
-  // Step 3: Process inline markdown
-  // KAIROS cognitive headers — strip them from the response body.
-  // The bottom metadata pill already shows accurate Agent / Model / Confidence.
-  safe = safe.replace(/🧠 Agent:.*?(\n|$)/g, '');
-  safe = safe.replace(/⚙️\s*Model:.*?(\n|$)/g, '');
-  safe = safe.replace(/🔒 Confidence:.*?(\n|$)/g, '');
-    '<div class="kairos-plan-divider">Plan / Solution</div>');
-
-  // Headers
-  safe = safe.replace(/^### (.+)$/gm, '<h3 class="md-h3">$1</h3>');
-  safe = safe.replace(/^## (.+)$/gm,  '<h2 class="md-h2">$1</h2>');
-  safe = safe.replace(/^# (.+)$/gm,   '<h1 class="md-h1">$1</h1>');
-
-  // Bold / italic
-  safe = safe.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-  safe = safe.replace(/\*\*(.+?)\*\*/g,     '<strong class="md-strong">$1</strong>');
-  safe = safe.replace(/\*(.+?)\*/g,         '<em class="md-em">$1</em>');
-
-  // Inline code  (after escaping, backticks are still literal)
-  safe = safe.replace(/`([^`\n]+)`/g,
-    '<code class="md-inline-code">$1</code>');
-
-  // Blockquote
-  safe = safe.replace(/^&gt; (.+)$/gm, '<blockquote class="md-blockquote">$1</blockquote>');
-
-  // Lists
-  safe = safe.replace(/^[\-\*\•] (.+)$/gm, '<li class="md-li">$1</li>');
-  safe = safe.replace(/^(\d+)\. (.+)$/gm,  '<li class="md-li-ordered"><span class="li-num">$1.</span>$2</li>');
-
-  // HR
-  safe = safe.replace(/^---+$/gm, '<hr class="md-hr">');
-
-  // Links
-  safe = safe.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>'
-  );
-
-  // Bold risk/warning lines
-  safe = safe.replace(
-    /^⚠\s*(.+)$/gm,
-    '<div class="md-warning">$1</div>'
-  );
-
-  // Paragraphs — double newlines
-  safe = safe.replace(/\n{2,}/g, '</p><p class="md-p">');
-  safe = safe.replace(/\n/g,     '<br>');
-  safe = `<p class="md-p">${safe}</p>`;
-
-  // Step 4: Restore code blocks with syntax highlighting + copy btn
-  safe = safe.replace(/%%CODE_BLOCK_(\d+)%%/g, (_, idx) => {
-    const { lang, code } = codeBlocks[parseInt(idx, 10)];
-    const highlighted = syntaxHighlight(escapeHtml(code), lang);
-    return `
-      <div class="code-block-wrapper">
-        <div class="code-block-header">
-          <span class="code-lang">${escapeHtml(lang)}</span>
-        </div>
-        <pre><code class="code-block-code">${highlighted}</code></pre>
-      </div>`;
-  });
-
-  return safe;
-}
-
-// ─── Syntax highlighter ───────────────────────────────────────────────────────
-
-/**
- * Very lightweight regex-based syntax highlight.
- * @param {string} escapedCode — already HTML-escaped
- * @param {string} lang
- */
-function syntaxHighlight(escapedCode, lang) {
-  if (!['js','javascript','ts','typescript','python','py','bash','sh','json','css','html','go','rust','java', 'kotlin'].includes(lang)) {
-    return escapedCode;
-  }
-
-  let code = escapedCode;
-
-  // Strings
-  code = code.replace(/(&#39;.*?&#39;|&quot;.*?&quot;|`[^`]*`)/g,
-    '<span class="tok-string">$1</span>');
-
-  // Comments
-  code = code.replace(/(\/\/.*?$|#.*?$)/gm,
-    '<span class="tok-comment">$1</span>');
-
-  // Numbers
-  code = code.replace(/\b(\d+\.?\d*)\b/g,
-    '<span class="tok-number">$1</span>');
-
-  // Keywords (JS/TS/Go/Kotlin)
-  const kwRe = /\b(const|let|var|function|return|if|else|for|while|class|extends|import|export|from|async|await|new|typeof|instanceof|null|undefined|true|false|void|interface|type|enum|implements|package|func|def|pass|in|not|and|or|is|lambda|yield|with|as|try|catch|finally|throw|switch|case|break|continue|default|static|public|private|protected|abstract|readonly|override|constructor|super|this|val|fun|object|data|sealed|companion|when)\b/g;
-  code = code.replace(kwRe, '<span class="tok-keyword">$1</span>');
-
-  // Function calls
-  code = code.replace(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*(?=\()/g,
-    '<span class="tok-fn">$1</span>');
-
-  return code;
-}
 
 // ─── Messages state ───────────────────────────────────────────────────────────
 
 function clearMessages() {
   messagesEl.innerHTML = '';
+
+  // Reset all stateful tracking so next session starts clean
+  messageHistory  = [];
+  messageIndex    = 0;
+  lastUserText    = '';
+  lastUserWrapper = null;
+  streamBuffer    = '';
+  streamTarget    = null;
+  cursorEl        = null;
+  isStreaming     = false;
+  streamAbortController = null;
+  pendingImages   = [];
+
+  if (sendBtn)  sendBtn.disabled = false;
+  stopBtn?.classList.add('hidden');
+
   renderEmptyState();
 }
 
 function renderEmptyState() {
-  const hints = [
-    { icon: 'terminal',    text: 'Explain my current file structure' },
-    { icon: 'bug_report',  text: 'Find bugs in the selected code'    },
-    { icon: 'auto_fix_high', text: 'Refactor this function'           },
-    { icon: 'science',     text: 'Write tests for this module'        },
-  ];
-
   messagesEl.innerHTML = `
     <div id="empty-state"
-         class="h-full flex flex-col items-center justify-center text-center max-w-[280px] mx-auto space-y-5 py-8">
-      <div class="relative">
-        <div class="w-16 h-16 rounded-3xl bg-primary/10 border border-primary/20 flex items-center
-                    justify-center text-primary shadow-2xl shadow-primary/20 animate-pulse-slow">
-          <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
-        </div>
-        <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500
-                    border-2 border-[#090b14] flex items-center justify-center">
-          <span class="material-symbols-outlined text-[10px] text-white">check</span>
-        </div>
+         class="h-full flex flex-col items-center justify-center text-center max-w-[240px] mx-auto space-y-3 py-8">
+      <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-500">
+        <span class="material-symbols-outlined text-[28px]">auto_awesome</span>
       </div>
       <div class="space-y-1">
-        <h2 class="text-white font-bold text-[15px]">How can I help today?</h2>
-        <p class="text-[11px] text-slate-500 leading-relaxed">
-          I'm your Kairos AI agent — I can build, test, debug, and refactor using the latest open-source models.
-        </p>
-      </div>
-      <div class="flex flex-col gap-2 w-full">
-        ${hints.map(h => `
-          <button class="hint-chip group flex items-center gap-3 p-2.5 rounded-xl
-                         bg-white/3 border border-white/5 text-left
-                         hover:bg-white/6 hover:border-primary/20 transition-all">
-            <span class="material-symbols-outlined text-sm text-slate-600
-                         group-hover:text-primary transition-colors">${h.icon}</span>
-            <span class="text-[11px] text-slate-400 group-hover:text-slate-200">${h.text}</span>
-          </button>
-        `).join('')}
+        <h2 class="text-white font-semibold text-[13px]">Glad to see you</h2>
+        <p class="text-[11px] text-slate-600 leading-relaxed">Ask anything or attach a file to get started.</p>
       </div>
     </div>
   `;
@@ -1051,42 +1043,88 @@ function renderHistory(sessions) {
     const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const day  = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
     return `
-      <div data-session-id="${escapeHtml(s.id)}"
-           style="padding:10px 12px;border-radius:10px;cursor:pointer;transition:background 0.15s;
-                  border:1px solid transparent;margin-bottom:2px;"
+      <div style="display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:10px;
+                  border:1px solid transparent;margin-bottom:2px;transition:background 0.15s;"
            onmouseover="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.07)';"
            onmouseout="this.style.background='';this.style.borderColor='transparent';">
-        <div style="font-size:12px;color:var(--text-dim);font-weight:500;white-space:nowrap;
-                    overflow:hidden;text-overflow:ellipsis;max-width:220px;">
-          ${escapeHtml(s.title)}
+        <div data-session-id="${escapeHtml(s.id)}" style="flex:1;min-width:0;cursor:pointer;">
+          <div style="font-size:12px;color:var(--text-dim);font-weight:500;white-space:nowrap;
+                      overflow:hidden;text-overflow:ellipsis;">
+            ${escapeHtml(s.title)}
+          </div>
+          <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${day} · ${time}</div>
         </div>
-        <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${day} · ${time}</div>
+        <button data-delete-session="${escapeHtml(s.id)}"
+                style="flex-shrink:0;padding:4px;border-radius:6px;border:none;background:transparent;
+                       color:var(--text-faint);cursor:pointer;transition:color 0.15s,background 0.15s;
+                       display:flex;align-items:center;"
+                onmouseover="this.style.color='#f87171';this.style.background='rgba(239,68,68,0.1)';"
+                onmouseout="this.style.color='';this.style.background='';">
+          <span class="material-symbols-outlined" style="font-size:15px;">delete</span>
+        </button>
       </div>`;
   }).join('');
 
   historyListContainer.querySelectorAll('[data-session-id]').forEach(item => {
     item.addEventListener('click', () => {
       vscode.postMessage({ type: 'loadSession', id: item.getAttribute('data-session-id') });
-      // Fix: use .open class (matches CSS) instead of Tailwind -translate-x-full
       historySidebar?.classList.remove('open');
     });
   });
+
+  historyListContainer.querySelectorAll('[data-delete-session]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-delete-session');
+      if (vscode) vscode.postMessage({ type: 'deleteSession', id });
+      // Optimistically remove from UI
+      btn.closest('div[onmouseover]')?.remove();
+      if (!historyListContainer.querySelector('[data-session-id]')) {
+        renderHistory([]);
+      }
+    });
+  });
 }
+
 
 // ─── File / image upload ──────────────────────────────────────────────────────
 
 /** @param {Event} event */
 function handleFileSelect(event) {
   const target = /** @type {HTMLInputElement} */ (event.target);
-  if (target.files && target.files.length > 0) {
-    const names = Array.from(target.files).map(f => f.name).join(', ');
-    appendSystemMessage(
-      `<span class="flex items-center gap-1.5">` +
-      `<span class="material-symbols-outlined text-[13px]">attach_file</span>` +
-      `${target.files.length} file(s): ${escapeHtml(names)}</span>`
-    );
-    target.value = '';
-  }
+  if (!target.files || target.files.length === 0) return;
+
+  const names = Array.from(target.files).map(f => f.name).join(', ');
+  appendSystemMessage(
+    `<span class="flex items-center gap-1.5">` +
+    `<span class="material-symbols-outlined text-[13px]">attach_file</span>` +
+    `Reading ${target.files.length} file(s): ${escapeHtml(names)}…</span>`
+  );
+
+  Array.from(target.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result?.toString() || '';
+      // Store as a structured context block that the model can read
+      pendingImages.push(
+        `data:text/plain;name=${encodeURIComponent(file.name)};base64,` +
+        btoa(unescape(encodeURIComponent(content)))
+      );
+      appendSystemMessage(
+        `<span class="flex items-center gap-1.5 text-emerald-400">` +
+        `<span class="material-symbols-outlined text-[13px]">check_circle</span>` +
+        `${escapeHtml(file.name)} ready to send</span>`
+      );
+    };
+    reader.onerror = () => {
+      appendSystemMessage(
+        `<span class="text-red-400">❌ Failed to read ${escapeHtml(file.name)}</span>`
+      );
+    };
+    reader.readAsText(file);
+  });
+
+  target.value = '';
 }
 
 /** @param {Event} event */
@@ -1202,11 +1240,11 @@ function showPermissionDialog(scope, detail) {
 }
 
 // ─── Final Init ───────────────────────────────────────────────────────────────
-// Called at the end of the file to ensure all functions are defined
-buildDropdowns();
-syncControls();
-renderEmptyState();   // show prompt chips until first message arrives
-if (inputEl) inputEl.focus();
-
-// Visual diagnostic: if you see this pill, the JavaScript has successfully initialized.
-appendSystemMessage('🛡️ Kairos UI Security Layer Active');
+window.addEventListener('load', () => {
+  buildDropdowns();
+  syncControls();
+  renderEmptyState();
+  if (inputEl) inputEl.focus();
+  if (vscode) vscode.postMessage({ type: 'ready' });
+  appendSystemMessage('🛡️ Kairos UI Security Layer Active');
+});

@@ -3,17 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' 'nonce-${nonce}' vscode-webview-resource: https://cdn.jsdelivr.net/ https://cdn.tailwindcss.com/;">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
+  <script nonce="${nonce}" src="https://cdn.tailwindcss.com"></script>
+  <script nonce="${nonce}">
     tailwind.config = {
       darkMode: 'class',
       theme: { extend: { colors: { primary: '#b8a9ff', 'primary-dark': '#8b5cf6' } } }
     };
   </script>
-  <link rel="stylesheet" href="chat.css">
+  <link rel="stylesheet" href="${cssUri}">
   <style>:root { color-scheme: dark; }</style>
+  <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script nonce="${nonce}">
+    if (typeof marked !== 'undefined') {
+      marked.setOptions({ breaks: true, gfm: true });
+    }
+  </script>
 </head>
 <body>
 <div id="app">
@@ -68,16 +76,35 @@
         <span class="material-symbols-outlined" style="font-size:13px;">checklist</span>
         Review Changes
       </button>
+
+      <div id="vram-gauge-wrap" title="GPU VRAM load" style="display:flex;align-items:center;gap:5px;margin-left:4px;">
+        <span class="material-symbols-outlined" style="font-size:13px;opacity:0.5;color:var(--text-dim,#94a3b8);">memory</span>
+        <div id="vram-bar-bg" style="width:48px;height:5px;border-radius:3px;background:rgba(255,255,255,0.1);overflow:hidden;">
+          <div id="vram-bar-fill" style="width:0%;height:100%;border-radius:3px;background:#b8a9ff;transition:width 0.6s ease,background 0.6s ease;"></div>
+        </div>
+        <span id="vram-label" style="font-size:9px;opacity:0.5;color:var(--text-dim,#94a3b8);min-width:24px;">--%</span>
+      </div>
     </div>
 
     <!-- Messages -->
+    <div id="toast-container" style="position:absolute;top:88px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:4px;pointer-events:none;"></div>
     <div id="messages"></div>
+
+    <!-- Thinking Preview Bar (shown live during streaming) -->
+    <div id="thinking-bar" class="hidden" style="padding:4px 16px 0;">
+      <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;
+                  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+                  font-size:10px;color:var(--text-faint,#475569);font-family:monospace;overflow:hidden;">
+        <span class="material-symbols-outlined" style="font-size:13px;flex-shrink:0;animation:spin 1s linear infinite">autorenew</span>
+        <span id="thinking-preview" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
+      </div>
+    </div>
 
     <!-- Input Section -->
     <div id="input-section">
       <div class="input-container">
         <div class="input-row">
-          <textarea id="user-input" rows="1" placeholder="Ask anything… @ to mention, / for commands"></textarea>
+          <textarea id="user-input" rows="1" placeholder="Ask anything… Ctrl+V to paste image"></textarea>
         </div>
         <div class="input-controls-row">
           <div class="controls-left">
@@ -139,6 +166,8 @@
   </div>
 
 </div>
-  <script src="chat.js"></script>
+
+
+  <script nonce="${nonce}" src="${jsUri}"></script>
 </body>
 </html>

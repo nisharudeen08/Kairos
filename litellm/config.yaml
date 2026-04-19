@@ -8,12 +8,6 @@ model_list:
       api_base: "https://ollama.pulsyra.com"
       timeout: 60
 
-  - model_name: "qwen-coder-win"
-    litellm_params:
-      model: "ollama/qwen2.5-coder:7b"
-      api_base: "https://ollama.pulsyra.com"
-      timeout: 120
-
   - model_name: "qwen-coder-ubuntu"
     litellm_params:
       model: "ollama/qwen2.5-coder:7b"
@@ -58,11 +52,6 @@ model_list:
       api_key: "os.environ/MISTRAL_API_KEY"
       timeout: 60
 
-  - model_name: "qwen3-coder"
-    litellm_params:
-      model: "openrouter/qwen/qwen-2.5-coder-32b-instruct"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
 
   - model_name: "codestral"
     litellm_params:
@@ -70,11 +59,6 @@ model_list:
       api_key: "os.environ/MISTRAL_API_KEY"
       timeout: 60
 
-  - model_name: "hermes-3-405b"
-    litellm_params:
-      model: "openrouter/nousresearch/hermes-3-llama-3.1-405b"
-      api_key: "os.environ/OPENROUTER_API_KEY_1"
-      timeout: 60
 
   - model_name: "llama-3.3-70b"
     litellm_params:

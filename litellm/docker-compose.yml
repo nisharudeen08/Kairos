@@ -1,6 +1,6 @@
 services:
   litellm:
-    image: ghcr.io/berriai/litellm:main-latest
+    build: .
     container_name: antigravity-litellm
     restart: unless-stopped
     ports:
