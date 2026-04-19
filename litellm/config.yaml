@@ -1,6 +1,7 @@
-# --- LiteLLM Proxy Configuration (D: DRIVE FINAL STABLE) -------------------------
+# --- Kairos Stable Cloud + Local Configuration (FINAL) ---------------------------
 model_list:
 
+  # ─── LOCAL LAPTOP MODELS (Aligned with JetBrains & VS Code) ───
   - model_name: "kairos-r1-14b"
     litellm_params:
       model: "ollama/kairos-r1-14b:latest"
@@ -23,20 +24,38 @@ model_list:
     litellm_params:
       model: "ollama/fervent_mcclintock/KwaiCoder-DS-V2-Lite-Base:Q4_K_M"
       api_base: "https://local-ai.pulsyra.com"
-      timeout: 300
 
   - model_name: "qwen-coder-win"
     litellm_params:
       model: "ollama/qwen2.5-coder:7b"
       api_base: "https://local-ai.pulsyra.com"
-      timeout: 300
 
   - model_name: "gemma-local-fast"
     litellm_params:
       model: "ollama/gemma:2b"
       api_base: "https://local-ai.pulsyra.com"
 
-# --- General ---
+  # ─── FREE CLOUD MODELS (OpenRouter) ───
+  - model_name: "gpt-oss-20b"
+    litellm_params:
+      model: "openrouter/openai/gpt-oss-20b:free"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+
+  - model_name: "llama-3.3-70b"
+    litellm_params:
+      model: "openrouter/meta-llama/llama-3.3-70b-instruct:free"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+
+  - model_name: "gemini-2.5-flash"
+    litellm_params:
+      model: "openrouter/google/gemini-2.5-flash-v1:free"
+      api_key: "os.environ/OPENROUTER_API_KEY_1"
+
+# --- General Settings ---
 general_settings:
-  disable_spend_logs: true
   no_auth: true
+  disable_spend_logs: true
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 3
