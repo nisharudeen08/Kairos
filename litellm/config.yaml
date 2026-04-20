@@ -12,7 +12,7 @@ model_list:
 
   - model_name: "deepseek-r1-8b"
     litellm_params:
-      model: "ollama/deepseek-r1:8b"
+      model: "ollama/deepseek-r1-8b:latest"
       api_base: "https://ollama.pulsyra.com"
       timeout: 300
 
